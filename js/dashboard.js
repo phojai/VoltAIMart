@@ -194,24 +194,29 @@ async function loadUsers(){
 
 /* ---------------- AI Settings (admin only) ---------------- */
 const PROVIDER_LABELS = { anthropic: "Anthropic (Claude)", openai: "OpenAI", gemini: "Google (Gemini)" };
+let lastLoadedSettings = null;
 
-function renderProviderKeyBlocks(settings){
+// Shows only the currently-selected provider's key/model fields (instead of
+// all three at once), so it's unambiguous which key you're pasting in.
+function renderProviderKeyBlocks(settings, selectedProvider){
+  const p = selectedProvider || settings.llmProvider;
   const container = document.getElementById("providerKeyBlocks");
-  container.innerHTML = ["anthropic", "openai", "gemini"].map(p => `
-    <div class="provider-key-block" style="margin-bottom:16px;">
+  container.innerHTML = `
+    <div class="provider-key-block">
       <label class="auth-label">${PROVIDER_LABELS[p]} API key ${settings.hasKey[p] ? '<span class="muted" style="font-size:11px;">(saved)</span>' : ""}</label>
       <input type="password" class="auth-input" data-provider-key="${p}" placeholder="${settings.hasKey[p] ? settings.apiKeys[p] : "Paste API key…"}">
       <label class="auth-label" style="margin-top:8px;">${PROVIDER_LABELS[p]} model</label>
       <input type="text" class="auth-input" data-provider-model="${p}" value="${settings.models[p]}">
     </div>
-  `).join("");
+  `;
 }
 
 async function loadSettings(){
   try {
     const settings = await Api.getSettings();
+    lastLoadedSettings = settings;
     document.getElementById("settingsProvider").value = settings.llmProvider;
-    renderProviderKeyBlocks(settings);
+    renderProviderKeyBlocks(settings, settings.llmProvider);
     document.getElementById("settingsSearchKey").placeholder = settings.webSearch.hasKey ? settings.webSearch.apiKey : "tvly-...";
     document.getElementById("settingsSearchStatus").textContent = settings.webSearch.hasKey
       ? "A search key is saved — live web search is active."
@@ -379,6 +384,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (currentUser.role === "admin"){
     document.getElementById("settingsSaveBtn").addEventListener("click", saveSettings);
+    document.getElementById("settingsProvider").addEventListener("change", (e) => {
+      if (lastLoadedSettings) renderProviderKeyBlocks(lastLoadedSettings, e.target.value);
+    });
     document.getElementById("vapiSaveBtn").addEventListener("click", saveVapiSettings);
     document.getElementById("vapiMode").addEventListener("change", toggleVapiModeBlocks);
   }
