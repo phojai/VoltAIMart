@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Log in — VoltAIMart</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header" style="position:static;">
+  <div class="container" style="display:flex; align-items:center; justify-content:center; padding:20px 0;">
+    <a href="index.html" class="logo"><span class="mark">⚡</span> VoltAIMart</a>
+  </div>
+</header>
+
+<section class="section tight">
+  <div class="container" style="max-width:920px;">
+    <div class="auth-layout">
+
+      <div class="auth-card card">
+        <div class="auth-tabs">
+          <button class="auth-tab active" id="tabLogin">Log in</button>
+          <button class="auth-tab" id="tabSignup">Sign up</button>
+        </div>
+
+        <form id="loginForm" class="auth-form">
+          <label class="auth-label">Email</label>
+          <input type="email" id="loginEmail" class="auth-input" placeholder="you@example.com" required>
+          <label class="auth-label">Password</label>
+          <input type="password" id="loginPassword" class="auth-input" placeholder="••••••••" required>
+          <div class="auth-error" id="loginError"></div>
+          <button type="submit" class="btn btn-primary btn-block" id="loginSubmit">Log in</button>
+        </form>
+
+        <form id="signupForm" class="auth-form" style="display:none;">
+          <label class="auth-label">Full name</label>
+          <input type="text" id="signupName" class="auth-input" placeholder="Jordan Rivera" required>
+          <label class="auth-label">Email</label>
+          <input type="email" id="signupEmail" class="auth-input" placeholder="you@example.com" required>
+          <label class="auth-label">Password</label>
+          <input type="password" id="signupPassword" class="auth-input" placeholder="At least 6 characters" required>
+          <div class="auth-error" id="signupError"></div>
+          <button type="submit" class="btn btn-primary btn-block" id="signupSubmit">Create customer account</button>
+          <p class="muted" style="font-size:12.5px; margin-top:10px;">New accounts are always created with the "Customer" role.</p>
+        </form>
+
+        <a href="index.html" class="see-all" style="display:block; text-align:center; margin-top:18px;">← Continue browsing without an account</a>
+      </div>
+
+      <div class="auth-side">
+        <p class="eyebrow accent">Demo accounts</p>
+        <h3 style="margin-bottom:6px;">Try any role</h3>
+        <p class="muted" style="font-size:13.5px; margin-bottom:18px;">This is a prototype backend with three seeded accounts. Click one to autofill the login form.</p>
+
+        <button class="demo-account-btn" data-email="admin@voltaimart.com" data-password="admin123">
+          <span class="demo-role admin">Admin</span>
+          <span class="demo-account-info">
+            <strong>Full back-office access</strong>
+            <span>Orders, product catalog, user management</span>
+          </span>
+        </button>
+        <button class="demo-account-btn" data-email="agent@voltaimart.com" data-password="agent123">
+          <span class="demo-role agent">Agent</span>
+          <span class="demo-account-info">
+            <strong>Support back-office access</strong>
+            <span>Orders, product catalog</span>
+          </span>
+        </button>
+        <button class="demo-account-btn" data-email="customer@voltaimart.com" data-password="customer123">
+          <span class="demo-role customer">Customer</span>
+          <span class="demo-account-info">
+            <strong>Shopper account</strong>
+            <span>Own order history only</span>
+          </span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<script src="js/api.js"></script>
+<script>
+  const params = new URLSearchParams(location.search);
+  const redirectTo = params.get("redirect");
+
+  // Already logged in? Skip straight to the right landing page.
+  (function(){
+    const user = getStoredUser();
+    if (user) window.location.href = redirectTo || roleLandingPage(user.role);
+  })();
+
+  const tabLogin = document.getElementById("tabLogin");
+  const tabSignup = document.getElementById("tabSignup");
+  const loginForm = document.getElementById("loginForm");
+  const signupForm = document.getElementById("signupForm");
+
+  tabLogin.addEventListener("click", () => {
+    tabLogin.classList.add("active"); tabSignup.classList.remove("active");
+    loginForm.style.display = ""; signupForm.style.display = "none";
+  });
+  tabSignup.addEventListener("click", () => {
+    tabSignup.classList.add("active"); tabLogin.classList.remove("active");
+    signupForm.style.display = ""; loginForm.style.display = "none";
+  });
+
+  document.querySelectorAll(".demo-account-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      tabLogin.click();
+      document.getElementById("loginEmail").value = btn.dataset.email;
+      document.getElementById("loginPassword").value = btn.dataset.password;
+    });
+  });
+
+  function afterAuth(user){
+    window.location.href = redirectTo || roleLandingPage(user.role);
+  }
+
+  loginForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const errorEl = document.getElementById("loginError");
+    errorEl.textContent = "";
+    const submitBtn = document.getElementById("loginSubmit");
+    submitBtn.disabled = true; submitBtn.textContent = "Logging in…";
+    try {
+      const user = await Api.login(
+        document.getElementById("loginEmail").value.trim(),
+        document.getElementById("loginPassword").value
+      );
+      afterAuth(user);
+    } catch (err){
+      errorEl.textContent = err.message || "Login failed.";
+      submitBtn.disabled = false; submitBtn.textContent = "Log in";
+    }
+  });
+
+  signupForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const errorEl = document.getElementById("signupError");
+    errorEl.textContent = "";
+    const submitBtn = document.getElementById("signupSubmit");
+    submitBtn.disabled = true; submitBtn.textContent = "Creating account…";
+    try {
+      const user = await Api.register(
+        document.getElementById("signupName").value.trim(),
+        document.getElementById("signupEmail").value.trim(),
+        document.getElementById("signupPassword").value
+      );
+      afterAuth(user);
+    } catch (err){
+      errorEl.textContent = err.message || "Sign up failed.";
+      submitBtn.disabled = false; submitBtn.textContent = "Create customer account";
+    }
+  });
+</script>
+</body>
+</html>

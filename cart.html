@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your Cart — VoltAIMart</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="topbar">
+  <div class="container">
+    <div class="topbar-brands">
+      <span>Free shipping over $50</span>
+      <span>2-year warranty on every device</span>
+      <span>30-day easy returns</span>
+      <span>24/7 voice support</span>
+    </div>
+    <div>Need help? <strong style="color:var(--text-primary)">1-800-VOLT-AI</strong></div>
+  </div>
+</div>
+
+<header class="site-header">
+  <div class="container nav-row">
+    <button class="hamburger-btn" id="menuToggle" aria-label="Open menu">
+      <span></span><span></span><span></span>
+    </button>
+    <a href="index.html" class="logo"><span class="mark">⚡</span> VoltAIMart</a>
+    <div class="nav-icons">
+      <a href="cart.html" class="icon-btn" title="Cart">
+        🛒
+        <span class="badge" data-cart-badge>0</span>
+      </a>
+      <a href="login.html" class="icon-btn" title="Account" data-account-link>👤</a>
+    </div>
+  </div>
+  <div class="container search-row">
+    <div class="nav-search nav-search-wide">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="topSearchInput" placeholder="Search products, or ask VoltAI…">
+      <button class="mic-btn" title="Search by voice">🎙️</button>
+    </div>
+  </div>
+</header>
+
+<section class="section tight">
+  <div class="container">
+    <div class="breadcrumb"><a href="index.html">Home</a> / Cart</div>
+    <div class="section-head">
+      <div>
+        <p class="eyebrow accent">Checkout</p>
+        <h2>Your cart</h2>
+      </div>
+    </div>
+
+    <div class="cart-layout" id="cartLayout">
+      <!-- filled by JS -->
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-bottom">
+      <span>© 2026 VoltAIMart. All rights reserved.</span>
+      <span>Privacy · Terms</span>
+    </div>
+  </div>
+</footer>
+
+<script src="js/api.js"></script>
+<script src="js/catalog.js"></script>
+<script src="js/app.js"></script>
+<script src="js/voice.js"></script>
+<script>
+document.addEventListener("catalog:ready", () => {
+  function renderCartPage(){
+    const cart = getCart();
+    const ids = Object.keys(cart);
+    const root = document.getElementById("cartLayout");
+
+    if (!ids.length){
+      root.innerHTML = `
+        <div class="empty-state" style="grid-column:1/-1;">
+          <span class="icon">🛒</span>
+          <h3 style="margin-bottom:8px;">Your cart is empty</h3>
+          <p>Try saying "show me headphones" to VoltAI, or browse all products.</p>
+          <a href="products.html" class="btn btn-primary" style="margin-top:18px; display:inline-flex;">Browse products</a>
+        </div>
+      `;
+      return;
+    }
+
+    const itemsHTML = ids.map(id => {
+      const p = getProductById(id);
+      if (!p) return "";
+      const qty = cart[id];
+      return `
+        <div class="cart-item" data-id="${id}">
+          <div class="product-thumb">${p.icon}</div>
+          <div>
+            <div class="cart-item-name">${p.name}</div>
+            <div class="cart-item-cat">${categoryLabel(p.category)}</div>
+            <span class="remove-link" data-remove="${id}">Remove</span>
+          </div>
+          <div class="qty-control">
+            <button data-minus="${id}">−</button>
+            <input type="text" value="${qty}" readonly>
+            <button data-plus="${id}">+</button>
+          </div>
+          <div class="price">$${(p.price * qty).toLocaleString()}</div>
+        </div>
+      `;
+    }).join("");
+
+    const subtotal = cartTotal();
+    const shipping = subtotal > 50 || subtotal === 0 ? 0 : 9.99;
+    const tax = subtotal * 0.08;
+    const total = subtotal + shipping + tax;
+
+    root.innerHTML = `
+      <div>${itemsHTML}</div>
+      <div class="summary-card">
+        <h3 style="margin-bottom:18px;">Order summary</h3>
+        <div class="summary-row"><span>Subtotal</span><span>$${subtotal.toLocaleString(undefined,{minimumFractionDigits:2})}</span></div>
+        <div class="summary-row"><span>Shipping</span><span>${shipping === 0 ? "Free" : "$" + shipping.toFixed(2)}</span></div>
+        <div class="summary-row"><span>Estimated tax</span><span>$${tax.toFixed(2)}</span></div>
+        <div class="summary-row total"><span>Total</span><span>$${total.toFixed(2)}</span></div>
+        <button class="btn btn-primary btn-block" style="margin-top:18px;" id="checkoutBtn">Checkout</button>
+        <button class="btn btn-ghost btn-block" style="margin-top:10px;" onclick="location.href='products.html'">Continue shopping</button>
+      </div>
+    `;
+
+    root.querySelectorAll("[data-remove]").forEach(el => el.addEventListener("click", () => {
+      removeFromCart(el.dataset.remove);
+      renderCartPage();
+    }));
+    root.querySelectorAll("[data-minus]").forEach(el => el.addEventListener("click", () => {
+      const id = el.dataset.minus;
+      setCartQty(id, (getCart()[id] || 1) - 1);
+      renderCartPage();
+    }));
+    root.querySelectorAll("[data-plus]").forEach(el => el.addEventListener("click", () => {
+      const id = el.dataset.plus;
+      setCartQty(id, (getCart()[id] || 0) + 1);
+      renderCartPage();
+    }));
+    const checkoutBtn = document.getElementById("checkoutBtn");
+    if (checkoutBtn){
+      checkoutBtn.addEventListener("click", async () => {
+        if (!isLoggedIn()){
+          showToast("Please log in to check out.");
+          setTimeout(() => { window.location.href = "login.html?redirect=cart.html"; }, 900);
+          return;
+        }
+        checkoutBtn.disabled = true;
+        checkoutBtn.textContent = "Placing order…";
+        try {
+          const items = Object.entries(getCart()).map(([productId, qty]) => ({ productId, qty }));
+          const order = await Api.createOrder(items);
+          saveCart({});
+          showToast(`Order ${order.id} placed!`);
+          setTimeout(() => { window.location.href = "account.html"; }, 1000);
+        } catch(err){
+          showToast(err.message || "Couldn't place order.");
+          checkoutBtn.disabled = false;
+          checkoutBtn.textContent = "Checkout";
+        }
+      });
+    }
+  }
+
+  renderCartPage();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Account — VoltAIMart</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header" style="position:static;">
+  <div class="container dash-topbar">
+    <a href="index.html" class="logo"><span class="mark">⚡</span> VoltAIMart</a>
+    <div class="dash-user" id="dashUser"><!-- filled by JS --></div>
+  </div>
+</header>
+
+<section class="section tight">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow accent">My account</p>
+        <h2 id="welcomeTitle">Welcome back</h2>
+      </div>
+      <a href="products.html" class="see-all">Continue shopping →</a>
+    </div>
+
+    <div class="account-layout">
+      <div class="card" id="profileCard">
+        <span class="icon">👤</span>
+        <h3 id="profileName"></h3>
+        <p id="profileEmail" class="muted" style="margin-bottom:14px;"></p>
+        <span class="dash-role-pill customer">Customer</span>
+        <div style="margin-top:20px;">
+          <button class="btn btn-ghost btn-block" id="logoutBtn">Log out</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-head" style="margin-bottom:16px;">
+          <div><h3 style="font-size:18px;">Order history</h3></div>
+          <span class="muted" id="orderCount">0 orders</span>
+        </div>
+        <div id="ordersList"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script src="js/api.js"></script>
+<script src="js/account.js"></script>
+</body>
+</html>

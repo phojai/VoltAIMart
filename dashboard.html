@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — VoltAIMart</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header" style="position:static;">
+  <div class="container dash-topbar">
+    <a href="index.html" class="logo"><span class="mark">⚡</span> VoltAIMart</a>
+    <div class="dash-user" id="dashUser"><!-- filled by JS --></div>
+  </div>
+</header>
+
+<section class="section tight">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow accent" id="roleEyebrow">Back office</p>
+        <h2 id="dashTitle">Dashboard</h2>
+      </div>
+      <a href="index.html" class="see-all">View storefront →</a>
+    </div>
+
+    <div class="stat-grid" id="statGrid"></div>
+
+    <div class="dash-tabs" id="dashTabs">
+      <button class="dash-tab active" data-tab="orders">Orders</button>
+      <button class="dash-tab" data-tab="products">Product Catalog</button>
+      <button class="dash-tab" data-tab="users" id="usersTabBtn" style="display:none;">Users</button>
+    </div>
+
+    <!-- Orders -->
+    <div class="dash-panel" id="panel-orders">
+      <div class="listing-toolbar">
+        <span class="muted" id="orderCount">0 orders</span>
+        <select class="select-sort" id="orderStatusFilter">
+          <option value="">All statuses</option>
+          <option value="processing">Processing</option>
+          <option value="shipped">Shipped</option>
+          <option value="delivered">Delivered</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table" id="ordersTable">
+          <thead>
+            <tr><th>Order</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Placed</th></tr>
+          </thead>
+          <tbody id="ordersBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Products -->
+    <div class="dash-panel" id="panel-products" style="display:none;">
+      <div class="listing-toolbar">
+        <span class="muted" id="productCount">0 products</span>
+        <button class="btn btn-primary" id="addProductBtn">+ Add product</button>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table" id="productsTable">
+          <thead>
+            <tr><th></th><th>Name</th><th>Category</th><th>Price</th><th>Rating</th><th></th></tr>
+          </thead>
+          <tbody id="productsBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Users (admin only) -->
+    <div class="dash-panel" id="panel-users" style="display:none;">
+      <div class="listing-toolbar">
+        <span class="muted" id="userCount">0 users</span>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table" id="usersTable">
+          <thead>
+            <tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th></tr>
+          </thead>
+          <tbody id="usersBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Add / Edit product modal -->
+<div class="modal-overlay" id="productModalOverlay">
+  <div class="modal-panel">
+    <div class="modal-head">
+      <h3 id="productModalTitle">Add product</h3>
+      <button class="voice-close" id="productModalClose">✕</button>
+    </div>
+    <form id="productForm" class="modal-form">
+      <div class="form-grid">
+        <div>
+          <label class="auth-label">Name</label>
+          <input type="text" id="pfName" class="auth-input" required>
+        </div>
+        <div>
+          <label class="auth-label">Category</label>
+          <select id="pfCategory" class="auth-input" required></select>
+        </div>
+        <div>
+          <label class="auth-label">Price ($)</label>
+          <input type="number" id="pfPrice" class="auth-input" min="0" step="0.01" required>
+        </div>
+        <div>
+          <label class="auth-label">Compare-at price ($, optional)</label>
+          <input type="number" id="pfOldPrice" class="auth-input" min="0" step="0.01">
+        </div>
+        <div>
+          <label class="auth-label">Rating (1–5)</label>
+          <input type="number" id="pfRating" class="auth-input" min="1" max="5" step="0.1" value="4.5">
+        </div>
+        <div>
+          <label class="auth-label">Icon (emoji)</label>
+          <input type="text" id="pfIcon" class="auth-input" value="📦" maxlength="4">
+        </div>
+        <div>
+          <label class="auth-label">Badge (optional)</label>
+          <select id="pfBadge" class="auth-input">
+            <option value="">None</option>
+            <option value="NEW">NEW</option>
+            <option value="SALE">SALE</option>
+          </select>
+        </div>
+      </div>
+      <label class="auth-label">Tagline</label>
+      <input type="text" id="pfTagline" class="auth-input" placeholder="Short one-line hook">
+      <label class="auth-label">Description</label>
+      <textarea id="pfDescription" class="auth-input" rows="3" placeholder="Full product description"></textarea>
+      <label class="auth-label">Keywords (comma separated, helps voice search)</label>
+      <input type="text" id="pfKeywords" class="auth-input" placeholder="e.g. laptop, notebook, ultrabook">
+      <div class="auth-error" id="productFormError"></div>
+      <div class="detail-actions" style="margin-top:16px;">
+        <button type="submit" class="btn btn-primary" style="flex:1;" id="productFormSubmit">Save product</button>
+        <button type="button" class="btn btn-ghost" id="productFormCancel">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/dashboard.js"></script>
+</body>
+</html>

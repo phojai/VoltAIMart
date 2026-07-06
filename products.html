@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>All Products — VoltAIMart</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="topbar">
+  <div class="container">
+    <div class="topbar-brands">
+      <span>Free shipping over $50</span>
+      <span>2-year warranty on every device</span>
+      <span>30-day easy returns</span>
+      <span>24/7 voice support</span>
+    </div>
+    <div>Need help? <strong style="color:var(--text-primary)">1-800-VOLT-AI</strong></div>
+  </div>
+</div>
+
+<header class="site-header">
+  <div class="container nav-row">
+    <button class="hamburger-btn" id="menuToggle" aria-label="Open menu">
+      <span></span><span></span><span></span>
+    </button>
+    <a href="index.html" class="logo"><span class="mark">⚡</span> VoltAIMart</a>
+    <div class="nav-icons">
+      <a href="cart.html" class="icon-btn" title="Cart">
+        🛒
+        <span class="badge" data-cart-badge>0</span>
+      </a>
+      <a href="login.html" class="icon-btn" title="Account" data-account-link>👤</a>
+    </div>
+  </div>
+  <div class="container search-row">
+    <div class="nav-search nav-search-wide">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="topSearchInput" placeholder="Search products, or ask VoltAI…">
+      <button class="mic-btn" title="Search by voice">🎙️</button>
+    </div>
+  </div>
+</header>
+
+<section class="section tight">
+  <div class="container">
+    <div class="breadcrumb"><a href="index.html">Home</a> / <span id="crumbLabel">All products</span></div>
+    <div class="section-head">
+      <div>
+        <p class="eyebrow accent" id="pageEyebrow">Catalogue</p>
+        <h2 id="pageTitle">All products</h2>
+      </div>
+    </div>
+
+    <div class="listing-layout">
+      <aside class="filter-panel">
+        <h4>Department</h4>
+        <div class="filter-group" id="deptFilters"></div>
+
+        <h4>Category</h4>
+        <div class="filter-group" id="categoryFilters"></div>
+
+        <h4>Price</h4>
+        <div class="filter-group">
+          <label><input type="radio" name="price" value="all" checked> Any price</label>
+          <label><input type="radio" name="price" value="0-100"> Under $100</label>
+          <label><input type="radio" name="price" value="100-500"> $100 – $500</label>
+          <label><input type="radio" name="price" value="500-1500"> $500 – $1,500</label>
+          <label><input type="radio" name="price" value="1500-99999"> $1,500+</label>
+        </div>
+
+        <h4>Rating</h4>
+        <div class="filter-group">
+          <label><input type="radio" name="rating" value="0" checked> Any rating</label>
+          <label><input type="radio" name="rating" value="4.5"> 4.5 ★ &amp; up</label>
+          <label><input type="radio" name="rating" value="4"> 4.0 ★ &amp; up</label>
+        </div>
+
+        <button class="btn btn-ghost btn-block" id="clearFilters">Clear filters</button>
+      </aside>
+
+      <div>
+        <div class="listing-toolbar">
+          <span class="muted" id="resultCount">0 products</span>
+          <select class="select-sort" id="sortSelect">
+            <option value="relevance">Sort: Relevance</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
+            <option value="rating">Highest Rated</option>
+          </select>
+        </div>
+        <div class="product-grid" id="productGrid"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <a href="index.html" class="logo" style="margin-bottom:14px;"><span class="mark">⚡</span> VoltAIMart</a>
+        <p class="muted" style="max-width:280px;">Electronics, reimagined for voice. Say what you need — VoltAIMart finds it.</p>
+      </div>
+      <div>
+        <h4>Shop</h4>
+        <ul>
+          <li><a href="products.html?category=smartphones">Smartphones</a></li>
+          <li><a href="products.html?category=laptops">Laptops</a></li>
+          <li><a href="products.html?category=headphones">Audio</a></li>
+          <li><a href="products.html?category=gaming">Gaming</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Support</h4>
+        <ul>
+          <li><a href="#">Track order</a></li>
+          <li><a href="#">Returns &amp; warranty</a></li>
+          <li><a href="#">Contact us</a></li>
+          <li><a href="#">Ask VoltAI</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Company</h4>
+        <ul>
+          <li><a href="#">About</a></li>
+          <li><a href="#">Careers</a></li>
+          <li><a href="#">Press</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 VoltAIMart. All rights reserved.</span>
+      <span>Privacy · Terms</span>
+    </div>
+  </div>
+</footer>
+
+<script src="js/api.js"></script>
+<script src="js/catalog.js"></script>
+<script src="js/app.js"></script>
+<script src="js/voice.js"></script>
+<script>
+document.addEventListener("catalog:ready", () => {
+  const params = new URLSearchParams(location.search);
+  const initialCategory = params.get("category") || "";
+  const initialCategoryObj = initialCategory ? CATEGORIES.find(c => c.id === initialCategory) : null;
+
+  let state = {
+    department: params.get("department") || (initialCategoryObj ? initialCategoryObj.department : ""),
+    category: initialCategory,
+    q: params.get("q") || "",
+    price: "all",
+    rating: "0",
+    sort: "relevance",
+  };
+
+  function renderDeptFilters(){
+    document.getElementById("deptFilters").innerHTML = `
+      <label><input type="radio" name="dept" value="" ${state.department ? "" : "checked"}> All departments</label>
+      ${DEPARTMENTS.map(d => `
+        <label><input type="radio" name="dept" value="${d.id}" ${state.department === d.id ? "checked" : ""}> ${d.icon} ${d.label}</label>
+      `).join("")}
+    `;
+    document.querySelectorAll('input[name="dept"]').forEach(el => el.addEventListener("change", (e) => {
+      state.department = e.target.value;
+      renderCategoryFilters();
+      applyFilters();
+    }));
+  }
+
+  function renderCategoryFilters(){
+    const cats = state.department ? getCategoriesByDepartment(state.department) : CATEGORIES;
+    document.getElementById("categoryFilters").innerHTML = cats.map(c => `
+      <label>
+        <input type="checkbox" class="cat-check" value="${c.id}" ${state.category === c.id ? "checked" : ""}>
+        ${c.icon} ${c.label}
+      </label>
+    `).join("");
+    document.querySelectorAll(".cat-check").forEach(el => el.addEventListener("change", applyFilters));
+  }
+
+  renderDeptFilters();
+  renderCategoryFilters();
+
+  if (state.q) document.getElementById("topSearchInput").value = state.q;
+
+  function currentCategoryChecks(){
+    return Array.from(document.querySelectorAll(".cat-check:checked")).map(el => el.value);
+  }
+
+  function applyFilters(){
+    let list = PRODUCTS.slice();
+
+    if (state.q){
+      list = searchProducts(state.q);
+    }
+
+    if (state.department){
+      list = list.filter(p => {
+        const cat = CATEGORIES.find(c => c.id === p.category);
+        return cat && cat.department === state.department;
+      });
+    }
+
+    const cats = currentCategoryChecks();
+    if (cats.length){
+      list = list.filter(p => cats.includes(p.category));
+    }
+
+    if (state.price !== "all"){
+      const [min, max] = state.price.split("-").map(Number);
+      list = list.filter(p => p.price >= min && p.price <= max);
+    }
+
+    const minRating = parseFloat(state.rating);
+    if (minRating > 0){
+      list = list.filter(p => p.rating >= minRating);
+    }
+
+    if (state.sort === "price-asc") list.sort((a,b) => a.price - b.price);
+    if (state.sort === "price-desc") list.sort((a,b) => b.price - a.price);
+    if (state.sort === "rating") list.sort((a,b) => b.rating - a.rating);
+
+    document.getElementById("resultCount").textContent = `${list.length} product${list.length === 1 ? "" : "s"}`;
+    renderGrid("#productGrid", list);
+
+    // header labels
+    if (state.q){
+      document.getElementById("pageTitle").textContent = `Results for "${state.q}"`;
+      document.getElementById("pageEyebrow").textContent = "Voice search";
+      document.getElementById("crumbLabel").textContent = `Search: ${state.q}`;
+    } else if (cats.length === 1){
+      const label = categoryLabel(cats[0]);
+      document.getElementById("pageTitle").textContent = label;
+      document.getElementById("pageEyebrow").textContent = "Category";
+      document.getElementById("crumbLabel").textContent = label;
+    } else if (state.department){
+      const dept = getDepartmentById(state.department);
+      document.getElementById("pageTitle").textContent = dept.label;
+      document.getElementById("pageEyebrow").textContent = "Department";
+      document.getElementById("crumbLabel").textContent = dept.label;
+    } else {
+      document.getElementById("pageTitle").textContent = "All products";
+      document.getElementById("pageEyebrow").textContent = "Catalogue";
+      document.getElementById("crumbLabel").textContent = "All products";
+    }
+  }
+
+  document.querySelectorAll('input[name="price"]').forEach(el => el.addEventListener("change", (e) => { state.price = e.target.value; applyFilters(); }));
+  document.querySelectorAll('input[name="rating"]').forEach(el => el.addEventListener("change", (e) => { state.rating = e.target.value; applyFilters(); }));
+  document.getElementById("sortSelect").addEventListener("change", (e) => { state.sort = e.target.value; applyFilters(); });
+  document.getElementById("clearFilters").addEventListener("click", () => {
+    state = { department: "", category: "", q: "", price: "all", rating: "0", sort: "relevance" };
+    renderDeptFilters();
+    renderCategoryFilters();
+    document.querySelector('input[name="price"][value="all"]').checked = true;
+    document.querySelector('input[name="rating"][value="0"]').checked = true;
+    document.getElementById("sortSelect").value = "relevance";
+    document.getElementById("topSearchInput").value = "";
+    applyFilters();
+  });
+
+  applyFilters();
+});
+</script>
+</body>
+</html>

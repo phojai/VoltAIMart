@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="pageTitleTag">Product — VoltAIMart</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="topbar">
+  <div class="container">
+    <div class="topbar-brands">
+      <span>Free shipping over $50</span>
+      <span>2-year warranty on every device</span>
+      <span>30-day easy returns</span>
+      <span>24/7 voice support</span>
+    </div>
+    <div>Need help? <strong style="color:var(--text-primary)">1-800-VOLT-AI</strong></div>
+  </div>
+</div>
+
+<header class="site-header">
+  <div class="container nav-row">
+    <button class="hamburger-btn" id="menuToggle" aria-label="Open menu">
+      <span></span><span></span><span></span>
+    </button>
+    <a href="index.html" class="logo"><span class="mark">⚡</span> VoltAIMart</a>
+    <div class="nav-icons">
+      <a href="cart.html" class="icon-btn" title="Cart">
+        🛒
+        <span class="badge" data-cart-badge>0</span>
+      </a>
+      <a href="login.html" class="icon-btn" title="Account" data-account-link>👤</a>
+    </div>
+  </div>
+  <div class="container search-row">
+    <div class="nav-search nav-search-wide">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="topSearchInput" placeholder="Search products, or ask VoltAI…">
+      <button class="mic-btn" title="Search by voice">🎙️</button>
+    </div>
+  </div>
+</header>
+
+<section class="section tight">
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="index.html">Home</a> / <a href="products.html" id="crumbCat">Products</a> / <span id="crumbName">Product</span>
+    </div>
+
+    <div class="detail-grid" id="detailRoot"><!-- filled by JS --></div>
+  </div>
+</section>
+
+<section class="section tight">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow accent">You might also like</p>
+        <h2>Related products</h2>
+      </div>
+    </div>
+    <div class="product-grid" id="relatedGrid"></div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <a href="index.html" class="logo" style="margin-bottom:14px;"><span class="mark">⚡</span> VoltAIMart</a>
+        <p class="muted" style="max-width:280px;">Electronics, reimagined for voice. Say what you need — VoltAIMart finds it.</p>
+      </div>
+      <div>
+        <h4>Shop</h4>
+        <ul>
+          <li><a href="products.html?category=smartphones">Smartphones</a></li>
+          <li><a href="products.html?category=laptops">Laptops</a></li>
+          <li><a href="products.html?category=headphones">Audio</a></li>
+          <li><a href="products.html?category=gaming">Gaming</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Support</h4>
+        <ul>
+          <li><a href="#">Track order</a></li>
+          <li><a href="#">Returns &amp; warranty</a></li>
+          <li><a href="#">Contact us</a></li>
+          <li><a href="#">Ask VoltAI</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Company</h4>
+        <ul>
+          <li><a href="#">About</a></li>
+          <li><a href="#">Careers</a></li>
+          <li><a href="#">Press</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 VoltAIMart. All rights reserved.</span>
+      <span>Privacy · Terms</span>
+    </div>
+  </div>
+</footer>
+
+<script src="js/api.js"></script>
+<script src="js/catalog.js"></script>
+<script src="js/app.js"></script>
+<script src="js/voice.js"></script>
+<script>
+document.addEventListener("catalog:ready", () => {
+  const params = new URLSearchParams(location.search);
+  const product = getProductById(params.get("id")) || PRODUCTS[0];
+
+  if (!product){
+    document.getElementById("detailRoot").innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1;">
+        <span class="icon">🔍</span>
+        <p>We couldn't find that product.</p>
+        <a href="products.html" class="btn btn-primary" style="margin-top:16px; display:inline-flex;">Browse products</a>
+      </div>
+    `;
+    return;
+  }
+
+  document.getElementById("pageTitleTag").textContent = `${product.name} — VoltAIMart`;
+  document.getElementById("crumbCat").textContent = categoryLabel(product.category);
+  document.getElementById("crumbCat").href = `products.html?category=${product.category}`;
+  document.getElementById("crumbName").textContent = product.name;
+
+  document.getElementById("detailRoot").innerHTML = `
+    <div class="detail-gallery">${product.icon}</div>
+    <div class="detail-info">
+      <span class="product-cat">${categoryLabel(product.category)}</span>
+      <h1>${product.name}</h1>
+      <span class="stars">${starString(product.rating)} <span class="muted">(${product.rating} rating)</span></span>
+      <div class="detail-price">
+        $${product.price.toLocaleString()}
+        ${product.oldPrice ? `<span class="price-old" style="font-size:18px; margin-left:10px;">$${product.oldPrice.toLocaleString()}</span>` : ""}
+      </div>
+      <p class="detail-desc">${product.description}</p>
+
+      <div class="qty-row">
+        <div class="qty-control">
+          <button id="qtyMinus">−</button>
+          <input type="text" id="qtyInput" value="1" readonly>
+          <button id="qtyPlus">+</button>
+        </div>
+        <span class="muted" style="font-size:13.5px;">In stock — ships in 1-2 days</span>
+      </div>
+
+      <div class="detail-actions">
+        <button class="btn btn-primary" id="addToCartBtn" style="flex:1;">Add to cart</button>
+        <button class="btn btn-ghost" id="askVoiceBtn">🎙️ Ask VoltAI about this</button>
+      </div>
+
+      <table class="spec-table">
+        ${Object.entries(product.specs).map(([k,v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join("")}
+      </table>
+    </div>
+  `;
+
+  let qty = 1;
+  document.getElementById("qtyMinus").addEventListener("click", () => {
+    qty = Math.max(1, qty - 1);
+    document.getElementById("qtyInput").value = qty;
+  });
+  document.getElementById("qtyPlus").addEventListener("click", () => {
+    qty = qty + 1;
+    document.getElementById("qtyInput").value = qty;
+  });
+  document.getElementById("addToCartBtn").addEventListener("click", () => addToCart(product.id, qty));
+  document.getElementById("askVoiceBtn").addEventListener("click", () => {
+    document.getElementById("voiceFab").click();
+  });
+
+  const related = getProductsByCategory(product.category).filter(p => p.id !== product.id).slice(0, 4);
+  renderGrid("#relatedGrid", related.length ? related : PRODUCTS.filter(p => p.id !== product.id).slice(0,4));
+});
+</script>
+</body>
+</html>
