@@ -14,6 +14,7 @@ const DB_PATH = path.join(__dirname, "data", "db.json");
 
 function defaultSettings(){
   return {
+    // --- VoltAI Assistant (floating chat FAB) — unchanged, do not repurpose these fields. ---
     llmProvider: "anthropic", // "anthropic" | "openai" | "gemini"
     models: {
       anthropic: "claude-sonnet-5",
@@ -22,6 +23,22 @@ function defaultSettings(){
     },
     apiKeys: { anthropic: "", openai: "", gemini: "" },
     webSearch: { provider: "tavily", apiKey: "" },
+
+    // --- Voice AI agent (hero search mic, powered by Vapi) ---
+    vapi: {
+      mode: "assistantId", // "assistantId" | "inline"
+      publicKey: "",
+      assistantId: "",
+      inline: {
+        firstMessage: "Hi, I'm VoltAI. Ask me to find products, check prices, or anything else.",
+        systemPrompt: "You are VoltAI, a friendly voice shopping assistant for VoltAIMart, an electronics & fashion storefront. Keep replies short and conversational.",
+        modelProvider: "openai",
+        modelName: "gpt-4o",
+        voiceProvider: "",
+        voiceId: "",
+      },
+    },
+
     updatedAt: new Date().toISOString(),
   };
 }
@@ -87,6 +104,10 @@ function readDB(){
   // Migration: older db.json files (from before AI chat existed) won't have settings.
   if (!data.settings){
     data.settings = defaultSettings();
+    writeDB(data);
+  } else if (!data.settings.vapi){
+    // Migration: db.json created before the Vapi voice agent existed.
+    data.settings.vapi = defaultSettings().vapi;
     writeDB(data);
   }
   return data;

@@ -873,6 +873,95 @@ select.select-sort{
   .ai-chat-fab{right:20px; bottom:20px;}
 }
 
+/* ---------- Voice AI agent (hero search mic, powered by Vapi) ----------
+   Deliberately separate from .mic-btn / .voice-fab / .voice-overlay /
+   .ai-chat-* above — the VoltAI Assistant chat FAB is untouched; this is
+   a distinct entry point for a live voice conversation on the homepage
+   hero search only. */
+.voice-agent-btn{
+  width:34px;height:34px;
+  border-radius:50%;
+  border:none;
+  display:flex;align-items:center;justify-content:center;
+  background: linear-gradient(135deg, var(--accent), #c9701f);
+  color:#1a1206;
+  cursor:pointer;
+  flex-shrink:0;
+  transition:.2s;
+  position:relative;
+}
+.voice-agent-btn:hover{transform:scale(1.06);}
+.hero-search .voice-agent-btn{width:44px;height:44px; font-size:18px;}
+.voice-agent-btn.active{
+  animation: voice-agent-pulse 1.4s infinite;
+  background: linear-gradient(135deg, var(--violet), #4b32b0);
+  color:#fff;
+}
+@keyframes voice-agent-pulse{
+  0%{box-shadow:0 0 0 0 rgba(124,92,255,0.55);}
+  70%{box-shadow:0 0 0 12px rgba(124,92,255,0);}
+  100%{box-shadow:0 0 0 0 rgba(124,92,255,0);}
+}
+
+.voice-agent-overlay{
+  position:fixed; inset:0;
+  background: rgba(4,3,8,0.78);
+  backdrop-filter: blur(6px);
+  display:flex; align-items:center; justify-content:center;
+  z-index:100;
+  opacity:0; pointer-events:none;
+  transition:.25s;
+}
+.voice-agent-overlay.open{opacity:1; pointer-events:auto;}
+.voice-agent-panel{
+  width:min(440px, 92vw);
+  background: linear-gradient(180deg, rgba(28,22,40,0.95), rgba(10,8,16,0.98));
+  border:1px solid var(--card-border);
+  border-radius:24px;
+  padding:36px 32px;
+  text-align:center;
+  box-shadow:0 30px 80px rgba(0,0,0,0.6);
+  position:relative;
+  transform:translateY(14px) scale(.97);
+  transition:.25s;
+}
+.voice-agent-overlay.open .voice-agent-panel{transform:translateY(0) scale(1);}
+.voice-agent-close{
+  position:absolute; top:16px; right:16px;
+  width:34px;height:34px; border-radius:50%;
+  background: var(--card-bg); border:1px solid var(--card-border);
+  color: var(--text-secondary); cursor:pointer; font-size:16px;
+}
+.voice-agent-orb{
+  width:96px; height:96px;
+  margin:0 auto 22px;
+  border-radius:50%;
+  background: radial-gradient(circle at 35% 30%, var(--accent-light), var(--violet) 70%);
+  display:flex;align-items:center;justify-content:center;
+  font-size:36px;
+  position:relative;
+}
+.voice-agent-orb::before{
+  content:'';
+  position:absolute; inset:-14px;
+  border-radius:50%;
+  border:1.5px solid rgba(124,92,255,0.35);
+  opacity:0;
+  animation: voice-agent-ring 1.6s ease-out infinite;
+}
+@keyframes voice-agent-ring{
+  0%{opacity:.8; transform:scale(.85);}
+  100%{opacity:0; transform:scale(1.35);}
+}
+.voice-agent-status{font-size:13px; color: var(--text-tertiary); text-transform:uppercase; letter-spacing:.08em; margin-bottom:14px;}
+.voice-agent-transcript{
+  min-height:52px;
+  font-size:16.5px;
+  font-weight:600;
+  color: var(--text-primary);
+  margin-bottom:8px;
+}
+
 /* ---------- Toast ---------- */
 .toast{
   position:fixed;

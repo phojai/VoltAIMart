@@ -262,6 +262,75 @@ async function saveSettings(){
   }
 }
 
+/* ---------------- Voice AI agent settings (Vapi, admin only) ----------------
+   Fully separate from loadSettings()/saveSettings() above (the VoltAI
+   Assistant chat provider) — this only manages the homepage hero-search
+   voice agent and doesn't touch that flow. */
+function toggleVapiModeBlocks(){
+  const mode = document.getElementById("vapiMode").value;
+  document.getElementById("vapiAssistantIdBlock").style.display = mode === "assistantId" ? "" : "none";
+  document.getElementById("vapiInlineBlock").style.display = mode === "inline" ? "" : "none";
+}
+
+async function loadVapiSettings(){
+  try {
+    const settings = await Api.getSettings();
+    const vapi = settings.vapi;
+    document.getElementById("vapiMode").value = vapi.mode;
+    document.getElementById("vapiPublicKey").placeholder = vapi.hasPublicKey ? vapi.publicKey : "Paste public key…";
+    document.getElementById("vapiAssistantId").value = vapi.assistantId || "";
+    document.getElementById("vapiFirstMessage").value = vapi.inline.firstMessage || "";
+    document.getElementById("vapiSystemPrompt").value = vapi.inline.systemPrompt || "";
+    document.getElementById("vapiModelProvider").value = vapi.inline.modelProvider || "";
+    document.getElementById("vapiModelName").value = vapi.inline.modelName || "";
+    document.getElementById("vapiVoiceProvider").value = vapi.inline.voiceProvider || "";
+    document.getElementById("vapiVoiceId").value = vapi.inline.voiceId || "";
+    document.getElementById("vapiStatus").textContent = vapi.hasPublicKey
+      ? "A public key is saved — the hero search mic is live."
+      : "No public key saved yet — the hero mic will prompt visitors that voice isn't set up.";
+    toggleVapiModeBlocks();
+  } catch (err){
+    showToast(err.message || "Couldn't load voice agent settings.");
+  }
+}
+
+async function saveVapiSettings(){
+  const errorEl = document.getElementById("vapiError");
+  errorEl.textContent = "";
+  const saveBtn = document.getElementById("vapiSaveBtn");
+  saveBtn.disabled = true;
+  saveBtn.textContent = "Saving…";
+
+  const publicKeyEl = document.getElementById("vapiPublicKey");
+  const payload = {
+    vapi: {
+      mode: document.getElementById("vapiMode").value,
+      publicKey: publicKeyEl.value.trim() || undefined,
+      assistantId: document.getElementById("vapiAssistantId").value.trim(),
+      inline: {
+        firstMessage: document.getElementById("vapiFirstMessage").value.trim(),
+        systemPrompt: document.getElementById("vapiSystemPrompt").value.trim(),
+        modelProvider: document.getElementById("vapiModelProvider").value.trim(),
+        modelName: document.getElementById("vapiModelName").value.trim(),
+        voiceProvider: document.getElementById("vapiVoiceProvider").value.trim(),
+        voiceId: document.getElementById("vapiVoiceId").value.trim(),
+      },
+    },
+  };
+
+  try {
+    await Api.updateSettings(payload);
+    showToast("Voice agent settings saved.");
+    publicKeyEl.value = "";
+    await loadVapiSettings();
+  } catch (err){
+    errorEl.textContent = err.message || "Couldn't save voice agent settings.";
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.textContent = "Save voice agent settings";
+  }
+}
+
 /* ---------------- Tabs ---------------- */
 function switchTab(tab){
   document.querySelectorAll(".dash-tab").forEach(t => t.classList.toggle("active", t.dataset.tab === tab));
@@ -301,12 +370,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     btn.addEventListener("click", async () => {
       switchTab(btn.dataset.tab);
       if (btn.dataset.tab === "users") await loadUsers();
-      if (btn.dataset.tab === "settings") await loadSettings();
+      if (btn.dataset.tab === "settings"){
+        await loadSettings();
+        await loadVapiSettings();
+      }
     });
   });
 
   if (currentUser.role === "admin"){
     document.getElementById("settingsSaveBtn").addEventListener("click", saveSettings);
+    document.getElementById("vapiSaveBtn").addEventListener("click", saveVapiSettings);
+    document.getElementById("vapiMode").addEventListener("change", toggleVapiModeBlocks);
   }
 
   document.getElementById("orderStatusFilter").addEventListener("change", loadOrders);

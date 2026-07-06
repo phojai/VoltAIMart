@@ -125,6 +125,61 @@
           <button type="button" class="btn btn-primary" id="settingsSaveBtn">Save AI settings</button>
         </div>
       </div>
+
+      <div class="card" style="padding:24px; max-width:640px; margin-top:20px;">
+        <p class="eyebrow accent">Homepage hero search</p>
+        <h3 style="margin-bottom:6px;">Voice AI agent (Vapi)</h3>
+        <p class="muted" style="font-size:13.5px; margin-bottom:20px;">
+          Powers the mic button on the homepage's hero search bar with a live voice conversation
+          (separate from the VoltAI Assistant chat FAB above, which is unaffected by these settings).
+          Get a public key at <a href="https://vapi.ai" target="_blank" rel="noopener" class="see-all">vapi.ai</a>.
+        </p>
+
+        <label class="auth-label">Vapi public API key</label>
+        <input type="password" id="vapiPublicKey" class="auth-input" placeholder="Paste public key…">
+
+        <label class="auth-label" style="margin-top:16px;">Assistant configuration</label>
+        <select id="vapiMode" class="auth-input">
+          <option value="assistantId">Use an Assistant ID (configured on vapi.ai)</option>
+          <option value="inline">Configure inline here (no vapi.ai setup needed)</option>
+        </select>
+
+        <div id="vapiAssistantIdBlock" style="margin-top:14px;">
+          <label class="auth-label">Assistant ID</label>
+          <input type="text" id="vapiAssistantId" class="auth-input" placeholder="e.g. 8b3f2b1a-...">
+        </div>
+
+        <div id="vapiInlineBlock" style="margin-top:14px; display:none;">
+          <label class="auth-label">First message</label>
+          <input type="text" id="vapiFirstMessage" class="auth-input" placeholder="Hi, I'm VoltAI...">
+          <label class="auth-label" style="margin-top:12px;">System prompt</label>
+          <textarea id="vapiSystemPrompt" class="auth-input" rows="3" placeholder="You are VoltAI, a helpful voice shopping assistant..."></textarea>
+          <div class="form-grid" style="margin-top:12px;">
+            <div>
+              <label class="auth-label">Model provider</label>
+              <input type="text" id="vapiModelProvider" class="auth-input" placeholder="openai">
+            </div>
+            <div>
+              <label class="auth-label">Model name</label>
+              <input type="text" id="vapiModelName" class="auth-input" placeholder="gpt-4o">
+            </div>
+            <div>
+              <label class="auth-label">Voice provider (optional)</label>
+              <input type="text" id="vapiVoiceProvider" class="auth-input" placeholder="11labs">
+            </div>
+            <div>
+              <label class="auth-label">Voice ID (optional)</label>
+              <input type="text" id="vapiVoiceId" class="auth-input" placeholder="voice id">
+            </div>
+          </div>
+        </div>
+
+        <p class="muted" id="vapiStatus" style="font-size:12px; margin-top:12px;"></p>
+        <div class="auth-error" id="vapiError"></div>
+        <div class="detail-actions" style="margin-top:20px;">
+          <button type="button" class="btn btn-primary" id="vapiSaveBtn">Save voice agent settings</button>
+        </div>
+      </div>
     </div>
   </div>
 </section>

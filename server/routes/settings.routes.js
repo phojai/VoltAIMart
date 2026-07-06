@@ -30,6 +30,13 @@ function publicSettings(settings){
       apiKey: mask(settings.webSearch.apiKey),
       hasKey: !!settings.webSearch.apiKey,
     },
+    vapi: {
+      mode: settings.vapi.mode,
+      publicKey: mask(settings.vapi.publicKey),
+      hasPublicKey: !!settings.vapi.publicKey,
+      assistantId: settings.vapi.assistantId,
+      inline: settings.vapi.inline,
+    },
     updatedAt: settings.updatedAt,
   };
 }
@@ -68,6 +75,29 @@ router.put("/", requireRole("admin"), (req, res) => {
       db.settings.webSearch.apiKey = body.webSearch.apiKey.trim();
     }
   }
+
+  // --- Voice AI agent (Vapi) ---
+  if (body.vapi && typeof body.vapi === "object"){
+    const v = body.vapi;
+    if (v.mode === "assistantId" || v.mode === "inline"){
+      db.settings.vapi.mode = v.mode;
+    }
+    if (typeof v.publicKey === "string" && v.publicKey && !v.publicKey.includes("•")){
+      db.settings.vapi.publicKey = v.publicKey.trim();
+    }
+    if (typeof v.assistantId === "string"){
+      db.settings.vapi.assistantId = v.assistantId.trim();
+    }
+    if (v.inline && typeof v.inline === "object"){
+      const fields = ["firstMessage", "systemPrompt", "modelProvider", "modelName", "voiceProvider", "voiceId"];
+      for (const f of fields){
+        if (typeof v.inline[f] === "string"){
+          db.settings.vapi.inline[f] = v.inline[f].trim();
+        }
+      }
+    }
+  }
+
   db.settings.updatedAt = new Date().toISOString();
   writeDB(db);
   res.json({ settings: publicSettings(db.settings) });
