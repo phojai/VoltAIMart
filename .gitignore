@@ -1,3 +1,4 @@
 node_modules/
 server/data/db.json
 .DS_Store
+js/_delete_test.js
