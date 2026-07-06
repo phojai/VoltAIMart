@@ -8,6 +8,8 @@ const productRoutes = require("./routes/products.routes");
 const orderRoutes = require("./routes/orders.routes");
 const userRoutes = require("./routes/users.routes");
 const metaRoutes = require("./routes/meta.routes");
+const chatRoutes = require("./routes/chat.routes");
+const settingsRoutes = require("./routes/settings.routes");
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -22,6 +24,8 @@ app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/meta", metaRoutes);
+app.use("/api/chat", chatRoutes);
+app.use("/api/settings", settingsRoutes);
 
 app.get("/api/health", (req, res) => res.json({ ok: true, service: "voltaimart-api" }));
 

@@ -12,6 +12,20 @@ const { DEPARTMENTS, CATEGORIES, PRODUCTS } = require("./seedData");
 
 const DB_PATH = path.join(__dirname, "data", "db.json");
 
+function defaultSettings(){
+  return {
+    llmProvider: "anthropic", // "anthropic" | "openai" | "gemini"
+    models: {
+      anthropic: "claude-sonnet-5",
+      openai: "gpt-4o-mini",
+      gemini: "gemini-2.0-flash",
+    },
+    apiKeys: { anthropic: "", openai: "", gemini: "" },
+    webSearch: { provider: "tavily", apiKey: "" },
+    updatedAt: new Date().toISOString(),
+  };
+}
+
 function seedInitialData(){
   const now = new Date().toISOString();
   const users = [
@@ -56,6 +70,7 @@ function seedInitialData(){
     orders: [],
     departments: DEPARTMENTS,
     categories: CATEGORIES,
+    settings: defaultSettings(),
   };
 }
 
@@ -68,7 +83,13 @@ function ensureDbFile(){
 
 function readDB(){
   ensureDbFile();
-  return JSON.parse(fs.readFileSync(DB_PATH, "utf8"));
+  const data = JSON.parse(fs.readFileSync(DB_PATH, "utf8"));
+  // Migration: older db.json files (from before AI chat existed) won't have settings.
+  if (!data.settings){
+    data.settings = defaultSettings();
+    writeDB(data);
+  }
+  return data;
 }
 
 function writeDB(data){

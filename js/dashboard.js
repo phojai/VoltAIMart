@@ -192,12 +192,83 @@ async function loadUsers(){
   return users;
 }
 
+/* ---------------- AI Settings (admin only) ---------------- */
+const PROVIDER_LABELS = { anthropic: "Anthropic (Claude)", openai: "OpenAI", gemini: "Google (Gemini)" };
+
+function renderProviderKeyBlocks(settings){
+  const container = document.getElementById("providerKeyBlocks");
+  container.innerHTML = ["anthropic", "openai", "gemini"].map(p => `
+    <div class="provider-key-block" style="margin-bottom:16px;">
+      <label class="auth-label">${PROVIDER_LABELS[p]} API key ${settings.hasKey[p] ? '<span class="muted" style="font-size:11px;">(saved)</span>' : ""}</label>
+      <input type="password" class="auth-input" data-provider-key="${p}" placeholder="${settings.hasKey[p] ? settings.apiKeys[p] : "Paste API key…"}">
+      <label class="auth-label" style="margin-top:8px;">${PROVIDER_LABELS[p]} model</label>
+      <input type="text" class="auth-input" data-provider-model="${p}" value="${settings.models[p]}">
+    </div>
+  `).join("");
+}
+
+async function loadSettings(){
+  try {
+    const settings = await Api.getSettings();
+    document.getElementById("settingsProvider").value = settings.llmProvider;
+    renderProviderKeyBlocks(settings);
+    document.getElementById("settingsSearchKey").placeholder = settings.webSearch.hasKey ? settings.webSearch.apiKey : "tvly-...";
+    document.getElementById("settingsSearchStatus").textContent = settings.webSearch.hasKey
+      ? "A search key is saved — live web search is active."
+      : "No search key saved yet — the assistant will only use the live product catalog.";
+  } catch (err){
+    showToast(err.message || "Couldn't load AI settings.");
+  }
+}
+
+async function saveSettings(){
+  const errorEl = document.getElementById("settingsError");
+  errorEl.textContent = "";
+  const saveBtn = document.getElementById("settingsSaveBtn");
+  saveBtn.disabled = true;
+  saveBtn.textContent = "Saving…";
+
+  const apiKeys = {};
+  document.querySelectorAll("[data-provider-key]").forEach(el => {
+    if (el.value.trim()) apiKeys[el.dataset.providerKey] = el.value.trim();
+  });
+  const models = {};
+  document.querySelectorAll("[data-provider-model]").forEach(el => {
+    if (el.value.trim()) models[el.dataset.providerModel] = el.value.trim();
+  });
+  const searchKeyEl = document.getElementById("settingsSearchKey");
+
+  const payload = {
+    llmProvider: document.getElementById("settingsProvider").value,
+    apiKeys,
+    models,
+    webSearch: {
+      provider: "tavily",
+      apiKey: searchKeyEl.value.trim() || undefined,
+    },
+  };
+
+  try {
+    await Api.updateSettings(payload);
+    showToast("AI settings saved.");
+    document.querySelectorAll("[data-provider-key]").forEach(el => el.value = "");
+    searchKeyEl.value = "";
+    await loadSettings();
+  } catch (err){
+    errorEl.textContent = err.message || "Couldn't save AI settings.";
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.textContent = "Save AI settings";
+  }
+}
+
 /* ---------------- Tabs ---------------- */
 function switchTab(tab){
   document.querySelectorAll(".dash-tab").forEach(t => t.classList.toggle("active", t.dataset.tab === tab));
   document.getElementById("panel-orders").style.display = tab === "orders" ? "" : "none";
   document.getElementById("panel-products").style.display = tab === "products" ? "" : "none";
   document.getElementById("panel-users").style.display = tab === "users" ? "" : "none";
+  document.getElementById("panel-settings").style.display = tab === "settings" ? "" : "none";
 }
 
 async function refreshOverviewStats(){
@@ -220,6 +291,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (currentUser.role === "admin"){
     document.getElementById("usersTabBtn").style.display = "";
+    document.getElementById("settingsTabBtn").style.display = "";
   }
 
   META = await Api.getMeta();
@@ -229,8 +301,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     btn.addEventListener("click", async () => {
       switchTab(btn.dataset.tab);
       if (btn.dataset.tab === "users") await loadUsers();
+      if (btn.dataset.tab === "settings") await loadSettings();
     });
   });
+
+  if (currentUser.role === "admin"){
+    document.getElementById("settingsSaveBtn").addEventListener("click", saveSettings);
+  }
 
   document.getElementById("orderStatusFilter").addEventListener("change", loadOrders);
   document.getElementById("addProductBtn").addEventListener("click", openAddProduct);

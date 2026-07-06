@@ -113,6 +113,15 @@ const Api = {
     const data = await apiFetch(`/api/users/${id}`, { method: "PATCH", body: { role } });
     return data.user;
   },
+
+  async getSettings(){
+    const data = await apiFetch("/api/settings");
+    return data.settings;
+  },
+  async updateSettings(patch){
+    const data = await apiFetch("/api/settings", { method: "PUT", body: patch });
+    return data.settings;
+  },
 };
 
 /** Redirects to login.html if not logged in, or if role isn't allowed. Returns the user, or null after redirecting. */

@@ -2,30 +2,15 @@ const express = require("express");
 const { nanoid } = require("nanoid");
 const { readDB, writeDB } = require("../db");
 const { requireRole } = require("../middleware/auth");
+const { searchCatalog } = require("../lib/catalogSearch");
 
 const router = express.Router();
 
 // GET /api/products?department=&category=&q=  — public
 router.get("/", (req, res) => {
   const db = readDB();
-  let list = db.products.slice();
   const { department, category, q } = req.query;
-
-  if (department){
-    list = list.filter(p => p.department === department);
-  }
-  if (category){
-    list = list.filter(p => p.category === category);
-  }
-  if (q){
-    const query = String(q).toLowerCase().trim();
-    list = list.filter(p =>
-      p.name.toLowerCase().includes(query) ||
-      p.category.toLowerCase().includes(query) ||
-      (p.tagline || "").toLowerCase().includes(query) ||
-      (p.keywords || []).some(k => query.includes(k) || k.includes(query))
-    );
-  }
+  const list = searchCatalog(db, { department, category, q });
   res.json({ products: list });
 });
 

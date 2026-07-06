@@ -31,6 +31,7 @@
       <button class="dash-tab active" data-tab="orders">Orders</button>
       <button class="dash-tab" data-tab="products">Product Catalog</button>
       <button class="dash-tab" data-tab="users" id="usersTabBtn" style="display:none;">Users</button>
+      <button class="dash-tab" data-tab="settings" id="settingsTabBtn" style="display:none;">AI Settings</button>
     </div>
 
     <!-- Orders -->
@@ -85,6 +86,46 @@
         </table>
       </div>
     </div>
+    <!-- AI Settings (admin only) -->
+    <div class="dash-panel" id="panel-settings" style="display:none;">
+      <div class="card" style="padding:24px; max-width:640px;">
+        <p class="eyebrow accent">VoltAI Assistant</p>
+        <h3 style="margin-bottom:6px;">AI Chat provider</h3>
+        <p class="muted" style="font-size:13.5px; margin-bottom:20px;">
+          Pick which LLM powers the storefront's chat assistant and add its API key. Keys are stored on this
+          server (in <span class="mono">server/data/db.json</span>) — fine for a demo, use a secrets manager
+          before going to production. The chat also has a live catalog search built in, plus optional live
+          web search below.
+        </p>
+
+        <label class="auth-label">Provider</label>
+        <select id="settingsProvider" class="auth-input">
+          <option value="anthropic">Anthropic — Claude</option>
+          <option value="openai">OpenAI — GPT</option>
+          <option value="gemini">Google — Gemini</option>
+        </select>
+
+        <div id="providerKeyBlocks" style="margin-top:16px;"></div>
+
+        <div style="border-top:1px solid var(--divider); margin:22px 0 18px;"></div>
+
+        <p class="eyebrow accent">Live web search</p>
+        <h3 style="margin-bottom:6px;">Search API (Tavily)</h3>
+        <p class="muted" style="font-size:13.5px; margin-bottom:16px;">
+          Optional. Lets the assistant answer questions beyond the product catalog (reviews, comparisons,
+          general facts) by searching the live web. Get a free key at
+          <a href="https://tavily.com" target="_blank" rel="noopener" class="see-all">tavily.com</a>.
+        </p>
+        <label class="auth-label">Tavily API key</label>
+        <input type="password" id="settingsSearchKey" class="auth-input" placeholder="tvly-...">
+        <p class="muted" id="settingsSearchStatus" style="font-size:12px; margin-top:6px;"></p>
+
+        <div class="auth-error" id="settingsError"></div>
+        <div class="detail-actions" style="margin-top:20px;">
+          <button type="button" class="btn btn-primary" id="settingsSaveBtn">Save AI settings</button>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -134,7 +175,7 @@
       <input type="text" id="pfTagline" class="auth-input" placeholder="Short one-line hook">
       <label class="auth-label">Description</label>
       <textarea id="pfDescription" class="auth-input" rows="3" placeholder="Full product description"></textarea>
-      <label class="auth-label">Keywords (comma separated, helps voice search)</label>
+      <label class="auth-label">Keywords (comma separated, helps AI chat + search)</label>
       <input type="text" id="pfKeywords" class="auth-input" placeholder="e.g. laptop, notebook, ultrabook">
       <div class="auth-error" id="productFormError"></div>
       <div class="detail-actions" style="margin-top:16px;">
