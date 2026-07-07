@@ -82,6 +82,33 @@
     return div;
   }
 
+  function escapeHtml(str){
+    const div = document.createElement("div");
+    div.textContent = str == null ? "" : String(str);
+    return div.innerHTML;
+  }
+
+  // Renders clickable product cards under a bot reply — the server already
+  // de-dupes whatever search_catalog surfaced this turn, so the assistant
+  // never has to (and never needs to) paste a raw link itself.
+  function appendProductChips(products){
+    if (!products || !products.length) return;
+    const body = document.getElementById("aiChatBody");
+    const row = document.createElement("div");
+    row.className = "ai-product-chips";
+    row.innerHTML = products.map(p => `
+      <a class="ai-product-chip" href="${escapeHtml(p.url || `product.html?id=${p.id}`)}">
+        <span class="ai-product-chip-icon">${escapeHtml(p.icon || "📦")}</span>
+        <span class="ai-product-chip-info">
+          <span class="ai-product-chip-name">${escapeHtml(p.name)}</span>
+          <span class="ai-product-chip-price">$${Number(p.price || 0).toLocaleString()}</span>
+        </span>
+      </a>
+    `).join("");
+    body.appendChild(row);
+    body.scrollTop = body.scrollHeight;
+  }
+
   function appendTyping(){
     const body = document.getElementById("aiChatBody");
     const div = document.createElement("div");
@@ -131,6 +158,7 @@
       }
       const reply = (data && data.reply) || "…";
       appendMessage("bot", reply);
+      appendProductChips(data && data.products);
       history.push({ role: "assistant", content: reply });
     } catch (err){
       removeTyping();

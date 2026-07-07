@@ -13,7 +13,23 @@ const SYSTEM_PROMPT = [
   "When a question needs current information outside the store (reviews, news, comparisons, general facts), call the web_search tool.",
   "If a tool returns an error or nothing useful, say so plainly instead of guessing.",
   "When you do have catalog results, mention specific product names and prices from the tool output.",
+  "Never paste raw URLs, markdown links, or say you can't provide a link — the chat interface automatically shows a clickable product card underneath your reply for every product search_catalog returns, so just refer to products by name naturally and let the interface handle linking.",
 ].join(" ");
+
+// Pulls every product search_catalog surfaced during this turn out of the tool
+// log, de-duplicated, so the UI can render them as clickable cards regardless
+// of whether the model itself remembers to mention all of them.
+function collectProductsFromToolLog(toolLog){
+  const seen = new Map();
+  for (const entry of toolLog || []){
+    if (entry.name === "search_catalog" && entry.output && Array.isArray(entry.output.results)){
+      for (const p of entry.output.results){
+        if (!seen.has(p.id)) seen.set(p.id, p);
+      }
+    }
+  }
+  return Array.from(seen.values()).slice(0, 4);
+}
 
 async function webSearch(query, apiKey){
   if (!query) return { error: "No query provided." };
@@ -84,6 +100,8 @@ router.post("/", async (req, res) => {
             rating: p.rating,
             tagline: p.tagline,
             badge: p.badge,
+            icon: p.icon,
+            url: `product.html?id=${p.id}`,
           }));
           return { count: results.length, results };
         },
@@ -96,7 +114,8 @@ router.post("/", async (req, res) => {
         },
       },
     });
-    res.json({ reply: result.text, toolCalls: result.toolLog });
+    const products = collectProductsFromToolLog(result.toolLog);
+    res.json({ reply: result.text, toolCalls: result.toolLog, products });
   } catch (err){
     console.error("Chat error:", err);
     res.status(502).json({ error: `AI provider error: ${err.message}` });

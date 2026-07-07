@@ -839,6 +839,40 @@ select.select-sort{
   padding:0 18px 12px;
   flex-shrink:0;
 }
+
+/* Clickable product cards the assistant attaches under a reply — rendered by
+   our own code from search_catalog results, not left to the model to link. */
+.ai-product-chips{
+  display:flex; flex-direction:column; gap:6px;
+  margin:-2px 0 2px;
+  align-self:flex-start;
+  max-width:92%;
+}
+.ai-product-chip{
+  display:flex; align-items:center; gap:10px;
+  background: rgba(255,255,255,0.04);
+  border:1px solid var(--card-border);
+  border-radius:12px;
+  padding:8px 12px;
+  transition:.15s;
+}
+.ai-product-chip:hover{
+  background: var(--card-bg-hover);
+  border-color: rgba(124,92,255,0.4);
+  transform:translateY(-1px);
+}
+.ai-product-chip-icon{
+  width:30px; height:30px; border-radius:8px;
+  background: rgba(255,255,255,0.05);
+  display:flex; align-items:center; justify-content:center;
+  font-size:15px; flex-shrink:0;
+}
+.ai-product-chip-info{display:flex; flex-direction:column; gap:1px; min-width:0;}
+.ai-product-chip-name{
+  font-size:13px; font-weight:700; color: var(--text-primary);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.ai-product-chip-price{font-size:12px; color: var(--accent-light); font-weight:600;}
 .ai-chat-input-row{
   display:flex; align-items:center; gap:8px;
   padding:12px 14px;
