@@ -2,6 +2,7 @@ const express = require("express");
 const { readDB } = require("../db");
 const { searchCatalog } = require("../lib/catalogSearch");
 const { runChat } = require("../lib/llm");
+const { decryptSecret } = require("../lib/secretCrypto");
 
 const router = express.Router();
 
@@ -46,7 +47,7 @@ router.post("/", async (req, res) => {
   const db = readDB();
   const settings = db.settings;
   const provider = settings.llmProvider;
-  const apiKey = settings.apiKeys[provider];
+  const apiKey = decryptSecret(settings.apiKeys[provider]);
 
   const rawMessages = Array.isArray(req.body && req.body.messages) ? req.body.messages : [];
   const messages = rawMessages
@@ -87,7 +88,7 @@ router.post("/", async (req, res) => {
           return { count: results.length, results };
         },
         web_search: async (input) => {
-          const key = settings.webSearch.apiKey;
+          const key = decryptSecret(settings.webSearch.apiKey);
           if (!key){
             return { error: "Web search isn't configured. Ask an admin to add a search API key in Dashboard → AI Settings." };
           }

@@ -193,30 +193,67 @@ async function loadUsers(){
 }
 
 /* ---------------- AI Settings (admin only) ---------------- */
-const PROVIDER_LABELS = { anthropic: "Anthropic (Claude)", openai: "OpenAI", gemini: "Google (Gemini)" };
-let lastLoadedSettings = null;
+const PROVIDER_META = {
+  anthropic: {
+    name: "Claude", fullName: "Anthropic Claude", icon: "🔶",
+    blurb: "Strong reasoning and long context, excellent at following instructions and using tools.",
+    keyUrl: "https://console.anthropic.com/settings/keys",
+  },
+  gemini: {
+    name: "Gemini", fullName: "Google Gemini", icon: "✨",
+    blurb: "Generous free tier with a very long context window — a good default to try first.",
+    keyUrl: "https://aistudio.google.com/apikey",
+  },
+  openai: {
+    name: "GPT", fullName: "OpenAI GPT", icon: "🟢",
+    blurb: "Broad tool/function-calling support and wide ecosystem compatibility.",
+    keyUrl: "https://platform.openai.com/api-keys",
+  },
+};
+const COMING_SOON_PROVIDERS = [
+  { name: "HF", icon: "🤗" },
+  { name: "Mistral", icon: "🌬️" },
+  { name: "Groq", icon: "⚡" },
+];
+const MODEL_CATALOG = {
+  anthropic: [
+    { id: "claude-sonnet-5", label: "Claude Sonnet 5", badge: "Recommended" },
+    { id: "claude-opus-4-8", label: "Claude Opus 4.8", badge: "Best" },
+    { id: "claude-haiku-4-5-20251001", label: "Claude Haiku 4.5", badge: "Fast" },
+  ],
+  openai: [
+    { id: "gpt-4o-mini", label: "GPT-4o mini", badge: "Recommended" },
+    { id: "gpt-4o", label: "GPT-4o", badge: "Best" },
+    { id: "gpt-4.1-mini", label: "GPT-4.1 mini", badge: "Fast" },
+  ],
+  gemini: [
+    { id: "gemini-2.5-flash", label: "Gemini 2.5 Flash", badge: "Recommended" },
+    { id: "gemini-2.5-pro", label: "Gemini 2.5 Pro", badge: "Best" },
+    { id: "gemini-2.0-flash", label: "Gemini 2.0 Flash", badge: "Fast" },
+    { id: "gemini-1.5-pro", label: "Gemini 1.5 Pro", badge: "" },
+  ],
+};
 
-// Shows only the currently-selected provider's key/model fields (instead of
-// all three at once), so it's unambiguous which key you're pasting in.
-function renderProviderKeyBlocks(settings, selectedProvider){
-  const p = selectedProvider || settings.llmProvider;
-  const container = document.getElementById("providerKeyBlocks");
-  container.innerHTML = `
-    <div class="provider-key-block">
-      <label class="auth-label">${PROVIDER_LABELS[p]} API key ${settings.hasKey[p] ? '<span class="muted" style="font-size:11px;">(saved)</span>' : ""}</label>
-      <input type="password" class="auth-input" data-provider-key="${p}" placeholder="${settings.hasKey[p] ? settings.apiKeys[p] : "Paste API key…"}">
-      <label class="auth-label" style="margin-top:8px;">${PROVIDER_LABELS[p]} model</label>
-      <input type="text" class="auth-input" data-provider-model="${p}" value="${settings.models[p]}">
-    </div>
-  `;
+let currentAiSettings = null;
+let modalSelectedProvider = null;
+let modalSelectedModel = null;
+
+function renderProviderSummary(settings){
+  const p = settings.llmProvider;
+  const meta = PROVIDER_META[p];
+  document.getElementById("providerSummaryIcon").textContent = meta.icon;
+  document.getElementById("providerSummaryName").textContent = meta.name;
+  document.getElementById("providerSummaryModel").textContent = settings.models[p];
+  const badge = document.getElementById("providerSummaryKeyStatus");
+  badge.textContent = settings.hasKey[p] ? "Saved" : "Not set";
+  badge.classList.toggle("saved", settings.hasKey[p]);
 }
 
 async function loadSettings(){
   try {
     const settings = await Api.getSettings();
-    lastLoadedSettings = settings;
-    document.getElementById("settingsProvider").value = settings.llmProvider;
-    renderProviderKeyBlocks(settings, settings.llmProvider);
+    currentAiSettings = settings;
+    renderProviderSummary(settings);
     document.getElementById("settingsSearchKey").placeholder = settings.webSearch.hasKey ? settings.webSearch.apiKey : "tvly-...";
     document.getElementById("settingsSearchStatus").textContent = settings.webSearch.hasKey
       ? "A search key is saved — live web search is active."
@@ -226,6 +263,8 @@ async function loadSettings(){
   }
 }
 
+// Saves just the Tavily search key — the chat provider itself is configured
+// through the "Configure AI Provider" modal below.
 async function saveSettings(){
   const errorEl = document.getElementById("settingsError");
   errorEl.textContent = "";
@@ -233,30 +272,12 @@ async function saveSettings(){
   saveBtn.disabled = true;
   saveBtn.textContent = "Saving…";
 
-  const apiKeys = {};
-  document.querySelectorAll("[data-provider-key]").forEach(el => {
-    if (el.value.trim()) apiKeys[el.dataset.providerKey] = el.value.trim();
-  });
-  const models = {};
-  document.querySelectorAll("[data-provider-model]").forEach(el => {
-    if (el.value.trim()) models[el.dataset.providerModel] = el.value.trim();
-  });
   const searchKeyEl = document.getElementById("settingsSearchKey");
-
-  const payload = {
-    llmProvider: document.getElementById("settingsProvider").value,
-    apiKeys,
-    models,
-    webSearch: {
-      provider: "tavily",
-      apiKey: searchKeyEl.value.trim() || undefined,
-    },
-  };
+  const payload = { webSearch: { provider: "tavily", apiKey: searchKeyEl.value.trim() || undefined } };
 
   try {
     await Api.updateSettings(payload);
     showToast("AI settings saved.");
-    document.querySelectorAll("[data-provider-key]").forEach(el => el.value = "");
     searchKeyEl.value = "";
     await loadSettings();
   } catch (err){
@@ -264,6 +285,157 @@ async function saveSettings(){
   } finally {
     saveBtn.disabled = false;
     saveBtn.textContent = "Save AI settings";
+  }
+}
+
+async function forgetSearchKey(){
+  if (!confirm("Forget the saved Tavily search key?")) return;
+  try {
+    await Api.updateSettings({ webSearch: { forget: true } });
+    showToast("Search key removed.");
+    await loadSettings();
+  } catch (err){
+    showToast(err.message || "Couldn't remove search key.");
+  }
+}
+
+/* ---- AI Provider Settings modal ---- */
+function renderProviderGrid(){
+  const container = document.getElementById("providerGrid");
+  const real = Object.keys(PROVIDER_META).map(id => {
+    const meta = PROVIDER_META[id];
+    const selected = modalSelectedProvider === id;
+    const saved = currentAiSettings && currentAiSettings.hasKey[id];
+    return `
+      <div class="provider-card ${selected ? "selected" : ""}" data-provider-card="${id}">
+        <div class="provider-card-radio"></div>
+        <div class="provider-card-icon">${meta.icon}</div>
+        <div class="provider-card-name">${meta.name}</div>
+        <div class="provider-card-badges">
+          <span class="provider-card-badge ${saved ? "" : "muted-badge"}">${saved ? "Key saved" : "Not set"}</span>
+        </div>
+      </div>
+    `;
+  }).join("");
+  const comingSoon = COMING_SOON_PROVIDERS.map(p => `
+    <div class="provider-card disabled" title="Coming soon">
+      <div class="provider-card-icon">${p.icon}</div>
+      <div class="provider-card-name">${p.name}</div>
+      <div class="provider-card-badges"><span class="provider-card-badge muted-badge">Coming soon</span></div>
+    </div>
+  `).join("");
+  container.innerHTML = real + comingSoon;
+  container.querySelectorAll("[data-provider-card]").forEach(card => {
+    card.addEventListener("click", () => selectModalProvider(card.dataset.providerCard));
+  });
+}
+
+function renderProviderInfoPanel(){
+  const meta = PROVIDER_META[modalSelectedProvider];
+  let hostname = meta.keyUrl;
+  try { hostname = new URL(meta.keyUrl).hostname; } catch (e){ /* ignore */ }
+  document.getElementById("providerInfoPanel").innerHTML = `
+    <strong>${meta.icon} ${meta.fullName}</strong>
+    ${meta.blurb}
+    <div style="margin-top:8px;"><a href="${meta.keyUrl}" target="_blank" rel="noopener">Get an API key at ${hostname} ↗</a></div>
+  `;
+}
+
+function renderModelList(){
+  const models = MODEL_CATALOG[modalSelectedProvider] || [];
+  const container = document.getElementById("modelList");
+  container.innerHTML = models.map(m => `
+    <div class="model-row ${modalSelectedModel === m.id ? "selected" : ""}" data-model-row="${m.id}">
+      <div class="model-row-radio"></div>
+      <div class="model-row-label">${m.label}</div>
+      ${m.badge ? `<span class="model-row-badge">${m.badge}</span>` : ""}
+    </div>
+  `).join("");
+  container.querySelectorAll("[data-model-row]").forEach(row => {
+    row.addEventListener("click", () => {
+      modalSelectedModel = row.dataset.modelRow;
+      renderModelList();
+    });
+  });
+}
+
+function renderKeySection(){
+  const hasKey = currentAiSettings && currentAiSettings.hasKey[modalSelectedProvider];
+  const maskedKey = currentAiSettings && currentAiSettings.apiKeys[modalSelectedProvider];
+
+  const statusEl = document.getElementById("keySectionStatus");
+  statusEl.textContent = hasKey ? "Saved" : "Not set";
+  statusEl.classList.toggle("saved", !!hasKey);
+
+  const input = document.getElementById("providerKeyInput");
+  input.value = "";
+  input.placeholder = hasKey ? maskedKey : "Paste API key…";
+
+  document.getElementById("providerKeyGetLink").href = PROVIDER_META[modalSelectedProvider].keyUrl;
+}
+
+function selectModalProvider(id){
+  modalSelectedProvider = id;
+  const models = MODEL_CATALOG[id] || [];
+  const savedModel = currentAiSettings && currentAiSettings.models[id];
+  modalSelectedModel = models.some(m => m.id === savedModel) ? savedModel : (models[0] && models[0].id);
+  renderProviderGrid();
+  renderProviderInfoPanel();
+  renderModelList();
+  renderKeySection();
+}
+
+function openAiProviderModal(){
+  if (!currentAiSettings){
+    showToast("Still loading settings — try again in a second.");
+    return;
+  }
+  document.getElementById("aiProviderModalError").textContent = "";
+  selectModalProvider(currentAiSettings.llmProvider);
+  document.getElementById("aiProviderModalOverlay").classList.add("open");
+}
+
+function closeAiProviderModal(){
+  document.getElementById("aiProviderModalOverlay").classList.remove("open");
+}
+
+async function useSelectedProvider(){
+  const errorEl = document.getElementById("aiProviderModalError");
+  errorEl.textContent = "";
+  const btn = document.getElementById("useProviderBtn");
+  btn.disabled = true;
+  btn.textContent = "Saving…";
+
+  const typedKey = document.getElementById("providerKeyInput").value.trim();
+  const payload = {
+    llmProvider: modalSelectedProvider,
+    models: { [modalSelectedProvider]: modalSelectedModel },
+  };
+  if (typedKey) payload.apiKeys = { [modalSelectedProvider]: typedKey };
+
+  try {
+    await Api.updateSettings(payload);
+    showToast(`Now using ${PROVIDER_META[modalSelectedProvider].name}.`);
+    await loadSettings();
+    closeAiProviderModal();
+  } catch (err){
+    errorEl.textContent = err.message || "Couldn't save provider settings.";
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Use this provider";
+  }
+}
+
+async function forgetProviderKey(){
+  if (!confirm(`Forget the saved ${PROVIDER_META[modalSelectedProvider].name} API key?`)) return;
+  try {
+    await Api.updateSettings({ forgetKeys: [modalSelectedProvider] });
+    showToast("API key removed.");
+    await loadSettings();
+    renderKeySection();
+    renderProviderGrid();
+  } catch (err){
+    showToast(err.message || "Couldn't remove API key.");
   }
 }
 
@@ -384,9 +556,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (currentUser.role === "admin"){
     document.getElementById("settingsSaveBtn").addEventListener("click", saveSettings);
-    document.getElementById("settingsProvider").addEventListener("change", (e) => {
-      if (lastLoadedSettings) renderProviderKeyBlocks(lastLoadedSettings, e.target.value);
+    document.getElementById("settingsSearchForgetBtn").addEventListener("click", forgetSearchKey);
+
+    document.getElementById("openAiProviderModalBtn").addEventListener("click", openAiProviderModal);
+    document.getElementById("aiProviderModalClose").addEventListener("click", closeAiProviderModal);
+    document.getElementById("aiProviderModalCancel").addEventListener("click", closeAiProviderModal);
+    document.getElementById("aiProviderModalOverlay").addEventListener("click", (e) => {
+      if (e.target.id === "aiProviderModalOverlay") closeAiProviderModal();
     });
+    document.getElementById("useProviderBtn").addEventListener("click", useSelectedProvider);
+    document.getElementById("providerKeyForgetBtn").addEventListener("click", forgetProviderKey);
+
     document.getElementById("vapiSaveBtn").addEventListener("click", saveVapiSettings);
     document.getElementById("vapiMode").addEventListener("change", toggleVapiModeBlocks);
   }

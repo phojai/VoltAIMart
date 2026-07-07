@@ -92,20 +92,20 @@
         <p class="eyebrow accent">VoltAI Assistant</p>
         <h3 style="margin-bottom:6px;">AI Chat provider</h3>
         <p class="muted" style="font-size:13.5px; margin-bottom:20px;">
-          Pick which LLM powers the storefront's chat assistant and add its API key. Keys are stored on this
-          server (in <span class="mono">server/data/db.json</span>) — fine for a demo, use a secrets manager
-          before going to production. The chat also has a live catalog search built in, plus optional live
-          web search below.
+          Pick which LLM powers the storefront's chat assistant and add its API key. Keys are encrypted
+          (AES-256-GCM) before being stored on this server — see <span class="mono">server/lib/secretCrypto.js</span>.
+          The chat also has a live catalog search built in, plus optional live web search below.
         </p>
 
-        <label class="auth-label">Provider</label>
-        <select id="settingsProvider" class="auth-input">
-          <option value="anthropic">Anthropic — Claude</option>
-          <option value="openai">OpenAI — GPT</option>
-          <option value="gemini">Google — Gemini</option>
-        </select>
-
-        <div id="providerKeyBlocks" style="margin-top:16px;"></div>
+        <div id="providerSummaryRow" class="provider-summary-row">
+          <div class="provider-summary-icon" id="providerSummaryIcon">🔶</div>
+          <div class="provider-summary-text">
+            <div class="provider-summary-name" id="providerSummaryName">Claude</div>
+            <div class="muted" id="providerSummaryModel" style="font-size:12.5px;">claude-sonnet-5</div>
+          </div>
+          <span class="key-status-badge" id="providerSummaryKeyStatus">Not set</span>
+          <button type="button" class="btn btn-ghost" id="openAiProviderModalBtn" style="margin-left:auto;">Configure AI Provider</button>
+        </div>
 
         <div style="border-top:1px solid var(--divider); margin:22px 0 18px;"></div>
 
@@ -117,7 +117,10 @@
           <a href="https://tavily.com" target="_blank" rel="noopener" class="see-all">tavily.com</a>.
         </p>
         <label class="auth-label">Tavily API key</label>
-        <input type="password" id="settingsSearchKey" class="auth-input" placeholder="tvly-...">
+        <div class="key-input-row">
+          <input type="password" id="settingsSearchKey" class="auth-input" placeholder="tvly-...">
+          <button type="button" class="link-btn danger" id="settingsSearchForgetBtn">Forget</button>
+        </div>
         <p class="muted" id="settingsSearchStatus" style="font-size:12px; margin-top:6px;"></p>
 
         <div class="auth-error" id="settingsError"></div>
@@ -183,6 +186,43 @@
     </div>
   </div>
 </section>
+
+<!-- AI Provider Settings modal -->
+<div class="modal-overlay" id="aiProviderModalOverlay">
+  <div class="modal-panel modal-panel-wide">
+    <div class="modal-head">
+      <div>
+        <h3>AI Provider Settings</h3>
+        <p class="muted" style="font-size:13px; margin-top:4px;">Choose your provider and configure model + API key</p>
+      </div>
+      <button class="voice-close" id="aiProviderModalClose">✕</button>
+    </div>
+
+    <p class="eyebrow accent" style="margin-top:6px;">Select provider</p>
+    <div class="provider-grid" id="providerGrid"><!-- filled by JS --></div>
+
+    <div class="provider-info-panel" id="providerInfoPanel"><!-- filled by JS --></div>
+
+    <label class="auth-label" style="margin-top:18px;">Model</label>
+    <div class="model-list" id="modelList"><!-- filled by JS --></div>
+
+    <div class="key-section-head">
+      <label class="auth-label" style="margin:0;">API key</label>
+      <span class="key-status-badge" id="keySectionStatus">Not set</span>
+      <div style="margin-left:auto; display:flex; gap:14px;">
+        <button type="button" class="link-btn danger" id="providerKeyForgetBtn">Forget</button>
+        <a href="#" target="_blank" rel="noopener" class="link-btn" id="providerKeyGetLink">Get key ↗</a>
+      </div>
+    </div>
+    <input type="password" id="providerKeyInput" class="auth-input" placeholder="Paste API key…">
+
+    <div class="auth-error" id="aiProviderModalError"></div>
+    <div class="detail-actions" style="margin-top:22px;">
+      <button type="button" class="btn btn-primary" style="flex:1;" id="useProviderBtn">Use this provider</button>
+      <button type="button" class="btn btn-ghost" id="aiProviderModalCancel">Cancel</button>
+    </div>
+  </div>
+</div>
 
 <!-- Add / Edit product modal -->
 <div class="modal-overlay" id="productModalOverlay">
