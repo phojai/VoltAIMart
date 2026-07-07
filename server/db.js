@@ -24,9 +24,10 @@ function defaultSettings(){
     apiKeys: { anthropic: "", openai: "", gemini: "" },
     webSearch: { provider: "tavily", apiKey: "" },
 
-    // --- Voice AI agent (hero search mic, powered by Vapi) ---
+    // --- Voice AI agent (hero search mic) ---
     vapi: {
-      mode: "assistantId", // "assistantId" | "inline"
+      agentMode: "simulated", // "simulated" (free, browser-based, hardcoded intents) | "vapi" (live AI voice agent)
+      mode: "assistantId", // "assistantId" | "inline" — only used when agentMode is "vapi"
       publicKey: "",
       assistantId: "",
       inline: {
@@ -108,6 +109,12 @@ function readDB(){
   } else if (!data.settings.vapi){
     // Migration: db.json created before the Vapi voice agent existed.
     data.settings.vapi = defaultSettings().vapi;
+    writeDB(data);
+  } else if (!data.settings.vapi.agentMode){
+    // Migration: db.json created before the simulated/Vapi mode toggle existed.
+    // Default to "vapi" here (not "simulated") so installs that already had a
+    // working Vapi key keep behaving exactly as before after this update.
+    data.settings.vapi.agentMode = data.settings.vapi.publicKey ? "vapi" : "simulated";
     writeDB(data);
   }
   return data;

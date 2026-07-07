@@ -995,6 +995,29 @@ select.select-sort{
   color: var(--text-primary);
   margin-bottom:8px;
 }
+.voice-agent-response{
+  background: rgba(255,255,255,0.04);
+  border:1px solid var(--card-border);
+  border-radius:14px;
+  padding:14px 16px;
+  font-size:14px;
+  color: var(--text-secondary);
+  text-align:left;
+  min-height:20px;
+  display:none;
+  margin-bottom:14px;
+}
+.voice-agent-response.show{display:block;}
+.voice-agent-hints{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom:6px;}
+.voice-agent-unsupported{
+  font-size:13px;
+  color: var(--danger);
+  margin-bottom:14px;
+}
+.voice-agent-fallback-form{
+  display:flex; gap:8px; margin-bottom:6px;
+}
+.voice-agent-fallback-form .auth-input{flex:1;}
 
 /* ---------- Toast ---------- */
 .toast{

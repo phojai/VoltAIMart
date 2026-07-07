@@ -43,6 +43,7 @@ function publicSettings(settings){
       hasKey: !!searchPlain,
     },
     vapi: {
+      agentMode: settings.vapi.agentMode,
       mode: settings.vapi.mode,
       publicKey: mask(settings.vapi.publicKey),
       hasPublicKey: !!settings.vapi.publicKey,
@@ -101,6 +102,9 @@ router.put("/", requireRole("admin"), (req, res) => {
   // designed to be embedded client-side (see server/routes/voiceAgent.routes.js). ---
   if (body.vapi && typeof body.vapi === "object"){
     const v = body.vapi;
+    if (v.agentMode === "simulated" || v.agentMode === "vapi"){
+      db.settings.vapi.agentMode = v.agentMode;
+    }
     if (v.mode === "assistantId" || v.mode === "inline"){
       db.settings.vapi.mode = v.mode;
     }

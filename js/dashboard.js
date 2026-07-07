@@ -449,10 +449,19 @@ function toggleVapiModeBlocks(){
   document.getElementById("vapiInlineBlock").style.display = mode === "inline" ? "" : "none";
 }
 
+function toggleVapiAgentModeBlocks(){
+  const agentMode = document.getElementById("vapiAgentMode").value;
+  document.getElementById("vapiLiveFieldsBlock").style.display = agentMode === "vapi" ? "" : "none";
+  document.getElementById("agentModeHint").textContent = agentMode === "vapi"
+    ? "Runs a live voice conversation through Vapi. Falls back to the free simulated agent automatically if the key is missing or invalid."
+    : "Uses your browser's built-in speech recognition to match spoken requests against a fixed set of shortcuts (open cart, browse a department/category, search the catalog) — no API key, no cost.";
+}
+
 async function loadVapiSettings(){
   try {
     const settings = await Api.getSettings();
     const vapi = settings.vapi;
+    document.getElementById("vapiAgentMode").value = vapi.agentMode;
     document.getElementById("vapiMode").value = vapi.mode;
     document.getElementById("vapiPublicKey").placeholder = vapi.hasPublicKey ? vapi.publicKey : "Paste public key…";
     document.getElementById("vapiAssistantId").value = vapi.assistantId || "";
@@ -462,10 +471,11 @@ async function loadVapiSettings(){
     document.getElementById("vapiModelName").value = vapi.inline.modelName || "";
     document.getElementById("vapiVoiceProvider").value = vapi.inline.voiceProvider || "";
     document.getElementById("vapiVoiceId").value = vapi.inline.voiceId || "";
-    document.getElementById("vapiStatus").textContent = vapi.hasPublicKey
-      ? "A public key is saved — the hero search mic is live."
-      : "No public key saved yet — the hero mic will prompt visitors that voice isn't set up.";
+    document.getElementById("vapiStatus").textContent = vapi.agentMode === "vapi"
+      ? (vapi.hasPublicKey ? "A public key is saved — the hero search mic runs the live Vapi agent." : "No public key saved yet — the hero mic will run the free simulated agent instead until one is added.")
+      : "Running the free simulated voice agent — no API key needed.";
     toggleVapiModeBlocks();
+    toggleVapiAgentModeBlocks();
   } catch (err){
     showToast(err.message || "Couldn't load voice agent settings.");
   }
@@ -481,6 +491,7 @@ async function saveVapiSettings(){
   const publicKeyEl = document.getElementById("vapiPublicKey");
   const payload = {
     vapi: {
+      agentMode: document.getElementById("vapiAgentMode").value,
       mode: document.getElementById("vapiMode").value,
       publicKey: publicKeyEl.value.trim() || undefined,
       assistantId: document.getElementById("vapiAssistantId").value.trim(),
@@ -569,6 +580,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     document.getElementById("vapiSaveBtn").addEventListener("click", saveVapiSettings);
     document.getElementById("vapiMode").addEventListener("change", toggleVapiModeBlocks);
+    document.getElementById("vapiAgentMode").addEventListener("change", toggleVapiAgentModeBlocks);
   }
 
   document.getElementById("orderStatusFilter").addEventListener("change", loadOrders);
