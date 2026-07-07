@@ -60,12 +60,20 @@
     <div class="dash-panel" id="panel-products" style="display:none;">
       <div class="listing-toolbar">
         <span class="muted" id="productCount">0 products</span>
-        <button class="btn btn-primary" id="addProductBtn">+ Add product</button>
+        <div style="margin-left:auto; display:flex; gap:10px;">
+          <button class="btn btn-ghost" id="exportProductsCsvBtn">Export CSV</button>
+          <button class="btn btn-ghost" id="exportProductsJsonBtn">Export JSON</button>
+          <button class="btn btn-primary" id="addProductBtn">+ Add product</button>
+        </div>
       </div>
+      <p class="muted" style="font-size:12px; margin:-8px 0 14px;">
+        Exports include every field the chat/voice assistant's catalog search sees (id, name, category, price,
+        rating, tagline, description, keywords) — handy as a reference for prompt engineering or fine-tuning.
+      </p>
       <div class="table-wrap">
         <table class="data-table" id="productsTable">
           <thead>
-            <tr><th></th><th>Name</th><th>Category</th><th>Price</th><th>Rating</th><th></th></tr>
+            <tr><th></th><th>Product ID</th><th>Name</th><th>Category</th><th>Price</th><th>Rating</th><th></th></tr>
           </thead>
           <tbody id="productsBody"></tbody>
         </table>

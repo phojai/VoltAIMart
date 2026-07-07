@@ -88,6 +88,7 @@ async function loadProducts(){
   document.getElementById("productsBody").innerHTML = products.map(p => `
     <tr>
       <td style="font-size:22px;">${p.icon}</td>
+      <td><span class="mono">${p.id}</span></td>
       <td>${p.name}${p.badge ? ` <span class="tag-inline ${p.badge==='NEW'?'new':''}">${p.badge}</span>` : ""}</td>
       <td class="muted">${categoryLabelSafe(p.category)}</td>
       <td>${fmtMoney(p.price)}${p.oldPrice ? `<div class="muted" style="font-size:12px; text-decoration:line-through;">${fmtMoney(p.oldPrice)}</div>` : ""}</td>
@@ -97,11 +98,67 @@ async function loadProducts(){
         <button class="icon-action" data-delete="${p.id}" title="Delete">🗑️</button>
       </td>
     </tr>
-  `).join("") || `<tr><td colspan="6" class="muted" style="text-align:center; padding:30px;">No products yet.</td></tr>`;
+  `).join("") || `<tr><td colspan="7" class="muted" style="text-align:center; padding:30px;">No products yet.</td></tr>`;
 
   document.querySelectorAll("[data-edit]").forEach(btn => btn.addEventListener("click", () => openEditProduct(btn.dataset.edit)));
   document.querySelectorAll("[data-delete]").forEach(btn => btn.addEventListener("click", () => deleteProduct(btn.dataset.delete)));
   return products;
+}
+
+function downloadFile(filename, content, mime){
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function csvEscape(val){
+  const s = val == null ? "" : String(val);
+  if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
+
+// Exports the same fields the chat/voice assistant's search_catalog tool sees
+// (id, name, category, price, rating, tagline, description, keywords), so the
+// file doubles as a reference for prompt engineering or a fine-tuning dataset.
+const PRODUCT_EXPORT_FIELDS = ["id", "name", "category", "department", "price", "oldPrice", "rating", "badge", "tagline", "description", "keywords"];
+
+async function exportProductsCSV(){
+  try {
+    const products = await Api.getProducts();
+    const rows = [PRODUCT_EXPORT_FIELDS.join(",")];
+    products.forEach(p => {
+      rows.push(PRODUCT_EXPORT_FIELDS.map(f => {
+        if (f === "keywords") return csvEscape((p.keywords || []).join("; "));
+        return csvEscape(p[f]);
+      }).join(","));
+    });
+    downloadFile(`voltaimart-products-${Date.now()}.csv`, rows.join("\n"), "text/csv");
+    showToast(`Exported ${products.length} products as CSV.`);
+  } catch (err){
+    showToast(err.message || "Couldn't export products.");
+  }
+}
+
+async function exportProductsJSON(){
+  try {
+    const products = await Api.getProducts();
+    const slim = products.map(p => {
+      const out = {};
+      PRODUCT_EXPORT_FIELDS.forEach(f => { out[f] = p[f]; });
+      out.keywords = p.keywords || [];
+      return out;
+    });
+    downloadFile(`voltaimart-products-${Date.now()}.json`, JSON.stringify(slim, null, 2), "application/json");
+    showToast(`Exported ${products.length} products as JSON.`);
+  } catch (err){
+    showToast(err.message || "Couldn't export products.");
+  }
 }
 
 function categoryLabelSafe(id){
@@ -585,6 +642,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   document.getElementById("orderStatusFilter").addEventListener("change", loadOrders);
   document.getElementById("addProductBtn").addEventListener("click", openAddProduct);
+  document.getElementById("exportProductsCsvBtn").addEventListener("click", exportProductsCSV);
+  document.getElementById("exportProductsJsonBtn").addEventListener("click", exportProductsJSON);
   document.getElementById("productModalClose").addEventListener("click", closeProductModal);
   document.getElementById("productFormCancel").addEventListener("click", closeProductModal);
   document.getElementById("productModalOverlay").addEventListener("click", (e) => {
