@@ -1,4 +1,5 @@
 node_modules/
-server/data/db.json
+apps/api/data/db.json
 .DS_Store
-public/js/_delete_test.js
+.env
+.vercel/

@@ -1,7 +1,7 @@
 /* ============================================================
    VoltAIMart — encryption at rest for stored API keys.
    Provider API keys and the web-search key are encrypted with
-   AES-256-GCM before being written to server/data/db.json, using
+   AES-256-GCM before being written to apps/api/data/db.json, using
    a key derived from process.env.ENCRYPTION_KEY. Set that env
    var to a long random string in production — the fallback here
    is fine for local demoing only (same pattern as JWT_SECRET in

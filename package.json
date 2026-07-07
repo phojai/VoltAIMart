@@ -1,18 +1,13 @@
 {
   "name": "voltaimart",
   "version": "1.0.0",
-  "description": "VoltAIMart — electronics & fashion storefront with a real Express backend (auth, product catalog, orders).",
-  "main": "server/server.js",
+  "private": true,
+  "description": "VoltAIMart — electronics & fashion storefront with a real Express backend (auth, product catalog, orders). Monorepo: apps/web (static frontend) + apps/api (Express backend).",
+  "workspaces": [
+    "apps/api"
+  ],
   "scripts": {
-    "start": "node server/server.js",
-    "dev": "node server/server.js"
-  },
-  "dependencies": {
-    "@upstash/redis": "^1.34.3",
-    "bcryptjs": "^2.4.3",
-    "cors": "^2.8.5",
-    "express": "^4.19.2",
-    "jsonwebtoken": "^9.0.2",
-    "nanoid": "^3.3.7"
+    "start": "npm run start --workspace=@voltaimart/api",
+    "dev": "npm run dev --workspace=@voltaimart/api"
   }
 }

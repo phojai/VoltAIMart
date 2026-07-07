@@ -3,7 +3,7 @@
    (one JSON blob: users, products, orders, settings).
 
    - Locally (or any host with a normal writable disk): falls back
-     to a plain file at server/data/db.json. Zero setup.
+     to a plain file at apps/api/data/db.json. Zero setup.
    - On Vercel: the deployed filesystem is read-only (only /tmp is
      writable, and it's wiped between invocations/instances), so a
      file on disk can't be used as real storage there. If Upstash

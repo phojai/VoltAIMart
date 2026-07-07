@@ -14,12 +14,12 @@ const voiceAgentRoutes = require("./routes/voiceAgent.routes");
 
 const app = express();
 const PORT = process.env.PORT || 4000;
-const ROOT = path.join(__dirname, "..");
-// Storefront + back-office frontend lives in /public. Locally, Express serves
-// it directly (below). On Vercel, express.static() is ignored entirely — its
-// CDN serves anything under public/** on its own — so this same layout works
-// unmodified in both places. See: https://vercel.com/docs/frameworks/backend/express
-const PUBLIC_DIR = path.join(ROOT, "public");
+// Storefront + back-office frontend lives in the sibling apps/web package.
+// Locally, Express serves it directly (below). On Vercel, this app runs as
+// the /api/* serverless function (see root api/index.js + vercel.json) and
+// apps/web is deployed as the static Output Directory, served straight from
+// its CDN — express.static() below never runs for those paths there.
+const PUBLIC_DIR = path.join(__dirname, "..", "web");
 
 app.use(cors());
 app.use(express.json());
@@ -47,10 +47,18 @@ app.use((req, res) => {
   res.status(404).sendFile(path.join(PUBLIC_DIR, "index.html"));
 });
 
-app.listen(PORT, () => {
-  console.log(`\n  VoltAIMart server running at http://localhost:${PORT}\n`);
-  console.log("  Demo accounts:");
-  console.log("    Admin:    admin@voltaimart.com    / admin123");
-  console.log("    Agent:    agent@voltaimart.com    / agent123");
-  console.log("    Customer: customer@voltaimart.com / customer123\n");
-});
+// Only start listening when this file is run directly (`node server.js` /
+// `npm start`, both locally). When Vercel's serverless runtime instead
+// requires this module (via the root api/index.js), it just wants the
+// exported `app` request handler — it manages the actual listening itself.
+if (require.main === module){
+  app.listen(PORT, () => {
+    console.log(`\n  VoltAIMart server running at http://localhost:${PORT}\n`);
+    console.log("  Demo accounts:");
+    console.log("    Admin:    prasenjit@voltmart.com  / admin123");
+    console.log("    Agent:    agent@voltaimart.com    / agent123");
+    console.log("    Customer: customer@voltaimart.com / customer123\n");
+  });
+}
+
+module.exports = app;
