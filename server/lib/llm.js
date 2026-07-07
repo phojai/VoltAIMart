@@ -38,6 +38,22 @@ const TOOL_DEFS = [
   },
 ];
 
+// Logs the FULL error body server-side (nothing truncated, so admins can see
+// exactly which quota/limit was hit) and throws a shorter, friendlier message
+// for the chat reply / API response.
+function raiseApiError(providerLabel, resp, errText){
+  console.error(`${providerLabel} raw error response (status ${resp.status}):\n${errText}`);
+  if (resp.status === 429){
+    throw new Error(
+      `${providerLabel} rate limit or quota exceeded (429). This is almost always a per-model free-tier ` +
+      `limit — "Pro"/flagship models have much stricter caps (sometimes just a handful of requests per ` +
+      `minute or per day) than "Flash"/"mini" models. Try switching to a lighter model in Dashboard → AI ` +
+      `Settings, or check your usage on the provider's dashboard. Details: ${errText.slice(0, 500)}`
+    );
+  }
+  throw new Error(`${providerLabel} API error (${resp.status}): ${errText.slice(0, 500)}`);
+}
+
 async function runTool(tools, name, input, toolLog){
   const fn = tools[name];
   if (!fn){
@@ -80,7 +96,7 @@ async function runAnthropic({ apiKey, model, systemPrompt, messages, tools }){
     });
     if (!resp.ok){
       const errText = await resp.text().catch(() => "");
-      throw new Error(`Anthropic API error (${resp.status}): ${errText.slice(0, 300)}`);
+      raiseApiError("Anthropic", resp, errText);
     }
     const data = await resp.json();
     const blocks = data.content || [];
@@ -119,7 +135,7 @@ async function runOpenAI({ apiKey, model, systemPrompt, messages, tools }){
     });
     if (!resp.ok){
       const errText = await resp.text().catch(() => "");
-      throw new Error(`OpenAI API error (${resp.status}): ${errText.slice(0, 300)}`);
+      raiseApiError("OpenAI", resp, errText);
     }
     const data = await resp.json();
     const msg = data.choices && data.choices[0] && data.choices[0].message;
@@ -159,7 +175,7 @@ async function runGemini({ apiKey, model, systemPrompt, messages, tools }){
     });
     if (!resp.ok){
       const errText = await resp.text().catch(() => "");
-      throw new Error(`Gemini API error (${resp.status}): ${errText.slice(0, 300)}`);
+      raiseApiError("Gemini", resp, errText);
     }
     const data = await resp.json();
     const candidate = data.candidates && data.candidates[0];
