@@ -6,7 +6,7 @@ let currentUser = null;
 let META = { departments: [], categories: [] };
 let editingProductId = null;
 
-function fmtMoney(n){ return `$${Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`; }
+function fmtMoney(n){ return `₹${Number(n).toLocaleString('en-IN')}`; }
 function fmtDate(iso){ return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }); }
 
 function renderUserBadge(){
@@ -583,6 +583,7 @@ function switchTab(tab){
   document.getElementById("panel-products").style.display = tab === "products" ? "" : "none";
   document.getElementById("panel-users").style.display = tab === "users" ? "" : "none";
   document.getElementById("panel-settings").style.display = tab === "settings" ? "" : "none";
+  document.getElementById("panel-stack").style.display = tab === "stack" ? "" : "none";
 }
 
 async function refreshOverviewStats(){
@@ -606,6 +607,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (currentUser.role === "admin"){
     document.getElementById("usersTabBtn").style.display = "";
     document.getElementById("settingsTabBtn").style.display = "";
+    document.getElementById("stackTabBtn").style.display = "";
   }
 
   META = await Api.getMeta();

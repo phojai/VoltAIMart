@@ -32,6 +32,7 @@
       <button class="dash-tab" data-tab="products">Product Catalog</button>
       <button class="dash-tab" data-tab="users" id="usersTabBtn" style="display:none;">Users</button>
       <button class="dash-tab" data-tab="settings" id="settingsTabBtn" style="display:none;">AI Settings</button>
+      <button class="dash-tab" data-tab="stack" id="stackTabBtn" style="display:none;">Tech Stack</button>
     </div>
 
     <!-- Orders -->
@@ -101,7 +102,7 @@
         <h3 style="margin-bottom:6px;">AI Chat provider</h3>
         <p class="muted" style="font-size:13.5px; margin-bottom:20px;">
           Pick which LLM powers the storefront's chat assistant and add its API key. Keys are encrypted
-          (AES-256-GCM) before being stored on this server — see <span class="mono">server/lib/secretCrypto.js</span>.
+          (AES-256-GCM) before being stored on this server — see <span class="mono">apps/api/lib/secretCrypto.js</span>.
           The chat also has a live catalog search built in, plus optional live web search below.
         </p>
 
@@ -141,8 +142,9 @@
         <p class="eyebrow accent">Homepage hero search</p>
         <h3 style="margin-bottom:6px;">Voice agent</h3>
         <p class="muted" style="font-size:13.5px; margin-bottom:20px;">
-          Powers the mic button on the homepage's hero search bar
-          (separate from the VoltAI Assistant chat FAB above, which is unaffected by these settings).
+          Powers the mic button on the homepage's hero search bar and the 📞 call-simulator button
+          in the header on every storefront page (separate from the VoltAI Assistant chat FAB above,
+          which is unaffected by these settings).
         </p>
 
         <label class="auth-label">Mode</label>
@@ -209,6 +211,165 @@
         </div>
       </div>
     </div>
+
+    <!-- Tech Stack (admin only) -->
+    <div class="dash-panel" id="panel-stack" style="display:none;">
+      <div class="card" style="padding:24px;">
+        <p class="eyebrow accent">Under the hood</p>
+        <h3 style="margin-bottom:6px;">Tech stack</h3>
+        <p class="muted" style="font-size:13.5px; margin-bottom:22px;">
+          What VoltAIMart is actually built with — for reference when debugging, extending, or handing this off.
+        </p>
+
+        <div class="stack-section">
+          <p class="stack-section-title">Frontend</p>
+          <div class="stack-grid">
+            <div class="stack-card">
+              <div class="stack-card-icon">🧱</div>
+              <div>
+                <div class="stack-card-name">Vanilla HTML / CSS / JS</div>
+                <div class="stack-card-desc">No framework, no build step — <span class="mono">apps/web/</span>. Storefront, cart, login, dashboard, account pages.</div>
+              </div>
+            </div>
+            <div class="stack-card">
+              <div class="stack-card-icon">🔌</div>
+              <div>
+                <div class="stack-card-name">Shared fetch client</div>
+                <div class="stack-card-desc"><span class="mono">js/api.js</span> — auth headers, token storage, every API call.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stack-section">
+          <p class="stack-section-title">Backend</p>
+          <div class="stack-grid">
+            <div class="stack-card">
+              <div class="stack-card-icon">🟢</div>
+              <div>
+                <div class="stack-card-name">Node.js 18+</div>
+                <div class="stack-card-desc">Runtime for the API and CLI tooling (reset script, etc.).</div>
+              </div>
+            </div>
+            <div class="stack-card">
+              <div class="stack-card-icon">🚂</div>
+              <div>
+                <div class="stack-card-name">Express 4</div>
+                <div class="stack-card-desc"><span class="mono">apps/api/server.js</span> — routing, JSON body parsing, CORS.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stack-section">
+          <p class="stack-section-title">Auth &amp; security</p>
+          <div class="stack-grid">
+            <div class="stack-card">
+              <div class="stack-card-icon">🔑</div>
+              <div>
+                <div class="stack-card-name">JWT (jsonwebtoken)</div>
+                <div class="stack-card-desc">7-day tokens; role checks (admin / agent / customer) enforced server-side.</div>
+              </div>
+            </div>
+            <div class="stack-card">
+              <div class="stack-card-icon">🔒</div>
+              <div>
+                <div class="stack-card-name">bcryptjs</div>
+                <div class="stack-card-desc">Password hashing for every account.</div>
+              </div>
+            </div>
+            <div class="stack-card">
+              <div class="stack-card-icon">🛡️</div>
+              <div>
+                <div class="stack-card-name">AES-256-GCM</div>
+                <div class="stack-card-desc">Encrypts stored LLM/search API keys at rest — <span class="mono">lib/secretCrypto.js</span>.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stack-section">
+          <p class="stack-section-title">Data &amp; storage</p>
+          <div class="stack-grid">
+            <div class="stack-card">
+              <div class="stack-card-icon">🗄️</div>
+              <div>
+                <div class="stack-card-name">JSON-blob datastore</div>
+                <div class="stack-card-desc">Local dev: one file at <span class="mono">apps/api/data/db.json</span>.</div>
+              </div>
+            </div>
+            <div class="stack-card">
+              <div class="stack-card-icon">☁️</div>
+              <div>
+                <div class="stack-card-name">Upstash Redis</div>
+                <div class="stack-card-desc">Swapped in automatically on Vercel's read-only filesystem via <span class="mono">@upstash/redis</span>.</div>
+              </div>
+            </div>
+            <div class="stack-card">
+              <div class="stack-card-icon">🆔</div>
+              <div>
+                <div class="stack-card-name">nanoid</div>
+                <div class="stack-card-desc">IDs for users, products, and orders.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stack-section">
+          <p class="stack-section-title">AI &amp; voice</p>
+          <div class="stack-grid">
+            <div class="stack-card">
+              <div class="stack-card-icon">🧠</div>
+              <div>
+                <div class="stack-card-name">Anthropic / OpenAI / Gemini</div>
+                <div class="stack-card-desc">Pluggable per admin choice — tool-calling loop in <span class="mono">lib/llm.js</span>, raw <span class="mono">fetch</span>, no vendor SDKs.</div>
+              </div>
+            </div>
+            <div class="stack-card">
+              <div class="stack-card-icon">🌐</div>
+              <div>
+                <div class="stack-card-name">Tavily</div>
+                <div class="stack-card-desc">Optional live web search tool for the chat assistant.</div>
+              </div>
+            </div>
+            <div class="stack-card">
+              <div class="stack-card-icon">🎙️</div>
+              <div>
+                <div class="stack-card-name">Vapi Web SDK</div>
+                <div class="stack-card-desc">Optional live voice agent for the homepage mic button.</div>
+              </div>
+            </div>
+            <div class="stack-card">
+              <div class="stack-card-icon">🗣️</div>
+              <div>
+                <div class="stack-card-name">Browser Speech API</div>
+                <div class="stack-card-desc">Free "simulated" voice fallback — zero setup, no API key needed.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stack-section">
+          <p class="stack-section-title">Deployment</p>
+          <div class="stack-grid">
+            <div class="stack-card">
+              <div class="stack-card-icon">▲</div>
+              <div>
+                <div class="stack-card-name">Vercel</div>
+                <div class="stack-card-desc">Static CDN for <span class="mono">apps/web</span> + a serverless function at <span class="mono">api/index.js</span>.</div>
+              </div>
+            </div>
+            <div class="stack-card">
+              <div class="stack-card-icon">📦</div>
+              <div>
+                <div class="stack-card-name">npm workspaces</div>
+                <div class="stack-card-desc">Monorepo: <span class="mono">apps/web</span> (frontend) + <span class="mono">apps/api</span> (backend).</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -271,11 +432,11 @@
           <select id="pfCategory" class="auth-input" required></select>
         </div>
         <div>
-          <label class="auth-label">Price ($)</label>
+          <label class="auth-label">Price (₹)</label>
           <input type="number" id="pfPrice" class="auth-input" min="0" step="0.01" required>
         </div>
         <div>
-          <label class="auth-label">Compare-at price ($, optional)</label>
+          <label class="auth-label">Compare-at price (₹, optional)</label>
           <input type="number" id="pfOldPrice" class="auth-input" min="0" step="0.01">
         </div>
         <div>

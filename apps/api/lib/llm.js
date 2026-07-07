@@ -19,7 +19,7 @@ const TOOL_DEFS = [
     parameters: {
       type: "object",
       properties: {
-        query: { type: "string", description: "Free-text search, e.g. 'wireless headphones under $100'" },
+        query: { type: "string", description: "Free-text search, e.g. 'wireless headphones under ₹8,000'" },
         department: { type: "string", enum: ["electronics", "fashion"] },
         category: { type: "string", description: "A specific category id, e.g. smartphones, laptops, mens, shoes, bags" },
       },

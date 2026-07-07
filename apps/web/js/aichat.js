@@ -36,7 +36,7 @@
         <div class="ai-msg ai-msg-bot">Hi, I'm VoltAI. Ask me about products, prices, or anything else — I can search the live catalog and the web.</div>
       </div>
       <div class="ai-chat-hints" id="aiChatHints">
-        <span class="voice-hint-chip">Show me headphones under $100</span>
+        <span class="voice-hint-chip">Show me Phones under ₹20,000</span>
         <span class="voice-hint-chip">What's trending in laptops?</span>
         <span class="voice-hint-chip">Where's my cart?</span>
       </div>
@@ -101,8 +101,8 @@
     row.className = "ai-product-cards";
     row.innerHTML = products.map(p => {
       const url = escapeHtml(p.url || `product.html?id=${p.id}`);
-      const price = `$${Number(p.price || 0).toLocaleString()}`;
-      const oldPrice = p.oldPrice ? `<span class="ai-product-card-oldprice">$${Number(p.oldPrice).toLocaleString()}</span>` : "";
+      const price = `₹${Number(p.price || 0).toLocaleString('en-IN')}`;
+      const oldPrice = p.oldPrice ? `<span class="ai-product-card-oldprice">₹${Number(p.oldPrice).toLocaleString('en-IN')}</span>` : "";
       const rating = p.rating ? `<span class="ai-product-card-rating">★ ${escapeHtml(p.rating)}</span>` : "";
       const badge = p.badge ? `<span class="ai-product-card-badge ${p.badge === "NEW" ? "new" : ""}">${escapeHtml(p.badge)}</span>` : "";
       return `

@@ -11,7 +11,7 @@
 <div class="topbar">
   <div class="container">
     <div class="topbar-brands">
-      <span>Free shipping over $50</span>
+      <span>Free shipping over ₹4,150</span>
       <span>2-year warranty on every device</span>
       <span>30-day easy returns</span>
       <span>24/7 voice support</span>
@@ -32,6 +32,7 @@
         <span class="badge" data-cart-badge>0</span>
       </a>
       <a href="login.html" class="icon-btn" title="Account" data-account-link>👤</a>
+      <button class="icon-btn call-sim-btn" id="phoneSimBtn" title="Try a call to VoltAI" type="button">📞</button>
     </div>
   </div>
   <div class="container search-row">
@@ -110,6 +111,17 @@
 <script src="js/catalog.js"></script>
 <script src="js/app.js"></script>
 <script src="js/aichat.js"></script>
+<!-- @vapi-ai/web no longer ships a plain-global browser bundle — every file under
+     its dist/ (including dist/vapi.min.js) is CommonJS ("exports"/"require"), which
+     throws "exports is not defined" if loaded via a plain <script src>. Load it as
+     an ES module instead via jsDelivr's +esm conversion, then stash the default
+     export on window.Vapi so phoneSimulator.js (a classic script) can still find it. -->
+<script type="module">
+  import Vapi from "https://cdn.jsdelivr.net/npm/@vapi-ai/web/+esm";
+  window.Vapi = Vapi;
+</script>
+<script src="js/vapiCall.js"></script>
+<script src="js/phoneSimulator.js"></script>
 <script>
 document.addEventListener("catalog:ready", () => {
   const params = new URLSearchParams(location.search);
@@ -138,8 +150,8 @@ document.addEventListener("catalog:ready", () => {
       <h1>${product.name}</h1>
       <span class="stars">${starString(product.rating)} <span class="muted">(${product.rating} rating)</span></span>
       <div class="detail-price">
-        $${product.price.toLocaleString()}
-        ${product.oldPrice ? `<span class="price-old" style="font-size:18px; margin-left:10px;">$${product.oldPrice.toLocaleString()}</span>` : ""}
+        ₹${product.price.toLocaleString('en-IN')}
+        ${product.oldPrice ? `<span class="price-old" style="font-size:18px; margin-left:10px;">₹${product.oldPrice.toLocaleString('en-IN')}</span>` : ""}
       </div>
       <p class="detail-desc">${product.description}</p>
 

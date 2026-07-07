@@ -1043,6 +1043,155 @@ select.select-sort{
 }
 .voice-agent-fallback-form .auth-input{flex:1;}
 
+/* ---------- Phone simulator (header call button, powered by Vapi) ----------
+   Deliberately separate from .voice-agent-* above — that's the homepage hero
+   mic; this is a distinct entry point (header icon, every storefront page)
+   for a demo outgoing call with a live two-sided transcript. */
+.icon-btn.call-sim-btn.active{
+  animation: call-sim-pulse 1.4s infinite;
+  background: linear-gradient(135deg, var(--violet), #4b32b0);
+  color:#fff;
+  border-color: transparent;
+}
+@keyframes call-sim-pulse{
+  0%{box-shadow:0 0 0 0 rgba(124,92,255,0.55);}
+  70%{box-shadow:0 0 0 10px rgba(124,92,255,0);}
+  100%{box-shadow:0 0 0 0 rgba(124,92,255,0);}
+}
+
+.call-sim-overlay{
+  position:fixed; inset:0;
+  background: rgba(4,3,8,0.78);
+  backdrop-filter: blur(6px);
+  display:flex; align-items:center; justify-content:center;
+  z-index:100;
+  opacity:0; pointer-events:none;
+  transition:.25s;
+}
+.call-sim-overlay.open{opacity:1; pointer-events:auto;}
+.call-sim-panel{
+  width:min(440px, 92vw);
+  max-height:min(640px, 88vh);
+  background: linear-gradient(180deg, rgba(28,22,40,0.95), rgba(10,8,16,0.98));
+  border:1px solid var(--card-border);
+  border-radius:24px;
+  padding:36px 32px;
+  text-align:center;
+  box-shadow:0 30px 80px rgba(0,0,0,0.6);
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  transform:translateY(14px) scale(.97);
+  transition:.25s;
+}
+.call-sim-overlay.open .call-sim-panel{transform:translateY(0) scale(1);}
+.call-sim-close{
+  position:absolute; top:16px; right:16px;
+  width:34px;height:34px; border-radius:50%;
+  background: var(--card-bg); border:1px solid var(--card-border);
+  color: var(--text-secondary); cursor:pointer; font-size:16px;
+}
+.call-sim-avatar{
+  width:96px; height:96px;
+  margin:0 auto 22px;
+  border-radius:50%;
+  background: radial-gradient(circle at 35% 30%, var(--accent-light), var(--violet) 70%);
+  display:flex;align-items:center;justify-content:center;
+  font-size:36px;
+  position:relative;
+}
+.call-sim-panel.ringing .call-sim-avatar::before{
+  content:'';
+  position:absolute; inset:-14px;
+  border-radius:50%;
+  border:1.5px solid rgba(124,92,255,0.35);
+  opacity:0;
+  animation: call-sim-ring 1.6s ease-out infinite;
+}
+@keyframes call-sim-ring{
+  0%{opacity:.8; transform:scale(.85);}
+  100%{opacity:0; transform:scale(1.35);}
+}
+.call-sim-status{font-size:13px; color: var(--text-tertiary); text-transform:uppercase; letter-spacing:.08em; margin-bottom:8px;}
+.call-sim-timer{
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size:14px;
+  color: var(--text-secondary);
+  margin-bottom:14px;
+  display:none;
+}
+.call-sim-panel.connected .call-sim-timer{display:block;}
+
+.call-sim-waveform{
+  display:none;
+  align-items:flex-end; justify-content:center;
+  gap:4px; height:28px; margin-bottom:18px;
+}
+.call-sim-panel.connected .call-sim-waveform{display:flex;}
+.call-sim-waveform span{
+  width:4px; background: var(--accent); border-radius:2px; height:6px;
+  transition: height .15s ease;
+}
+.call-sim-panel.connected .call-sim-waveform span{animation: call-sim-bar-bounce 1s ease-in-out infinite;}
+.call-sim-waveform span:nth-child(1){animation-delay:0s;}
+.call-sim-waveform span:nth-child(2){animation-delay:.1s;}
+.call-sim-waveform span:nth-child(3){animation-delay:.2s;}
+.call-sim-waveform span:nth-child(4){animation-delay:.3s;}
+.call-sim-waveform span:nth-child(5){animation-delay:.4s;}
+.call-sim-waveform span:nth-child(6){animation-delay:.3s;}
+.call-sim-waveform span:nth-child(7){animation-delay:.2s;}
+.call-sim-waveform span:nth-child(8){animation-delay:.1s;}
+@keyframes call-sim-bar-bounce{
+  0%,100%{height:6px;}
+  50%{height:26px;}
+}
+
+.call-sim-transcript-log{
+  flex:1;
+  overflow-y:auto;
+  max-height:220px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  text-align:left;
+  margin:4px 0 18px;
+}
+.call-sim-line{
+  border-radius:14px;
+  padding:10px 14px;
+  font-size:13.5px;
+  line-height:1.4;
+  max-width:88%;
+}
+.call-sim-line-label{
+  display:block;
+  font-size:10.5px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  margin-bottom:3px;
+  opacity:.7;
+}
+.call-sim-line-you{
+  align-self:flex-end;
+  background: rgba(232,152,61,0.14);
+  border:1px solid rgba(232,152,61,0.3);
+  color: var(--text-primary);
+}
+.call-sim-line-agent{
+  align-self:flex-start;
+  background: rgba(124,92,255,0.14);
+  border:1px solid rgba(124,92,255,0.3);
+  color: var(--text-primary);
+}
+
+.call-sim-not-configured{
+  font-size:13.5px;
+  color: var(--text-secondary);
+  line-height:1.5;
+  margin-top:4px;
+}
+
 /* ---------- Toast ---------- */
 .toast{
   position:fixed;
@@ -1419,6 +1568,34 @@ select.select-sort{
 .link-btn:hover{color: var(--text-primary);}
 .link-btn.danger{color: var(--danger);}
 .link-btn.danger:hover{color:#ff8a9c;}
+
+/* ---------- Tech Stack tab ---------- */
+.stack-section{margin-bottom:26px;}
+.stack-section:last-child{margin-bottom:0;}
+.stack-section-title{
+  font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.05em;
+  color: var(--text-tertiary); margin-bottom:12px;
+}
+.stack-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));
+  gap:12px;
+}
+.stack-card{
+  display:flex; gap:12px; align-items:flex-start;
+  border:1px solid var(--card-border);
+  background: var(--card-bg);
+  border-radius:14px;
+  padding:14px 16px;
+}
+.stack-card-icon{
+  width:34px; height:34px; border-radius:9px; flex-shrink:0;
+  background: rgba(255,255,255,0.06);
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px;
+}
+.stack-card-name{font-weight:700; font-size:14px; margin-bottom:3px;}
+.stack-card-desc{font-size:12.5px; color: var(--text-secondary); line-height:1.45;}
 
 .provider-grid{
   display:grid;

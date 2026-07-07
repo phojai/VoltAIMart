@@ -174,8 +174,9 @@
     if (!VapiCtor){
       console.error(
         "Vapi Web SDK isn't loaded — window.Vapi is " + typeof window.Vapi + ". " +
-        "Check that the <script src=\"...@vapi-ai/web/dist/vapi.min.js\"> tag in index.html " +
-        "actually loaded (Network tab) — if it 404s, the package's CDN path may have changed again."
+        "Check the <script type=\"module\"> block in index.html that imports " +
+        "@vapi-ai/web via jsDelivr's +esm endpoint (Network tab) — if that import " +
+        "404s or errors, the package's published structure may have changed again."
       );
       return null;
     }

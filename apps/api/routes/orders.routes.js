@@ -46,7 +46,7 @@ router.post("/", requireAuth, async (req, res) => {
       icon: product.icon,
       price: product.price,
       qty,
-      lineTotal: Math.round(product.price * qty * 100) / 100,
+      lineTotal: Math.round(product.price * qty),
     });
   }
 
@@ -54,10 +54,11 @@ router.post("/", requireAuth, async (req, res) => {
     return res.status(400).json({ error: "None of the submitted items were found in the catalog." });
   }
 
+  // Prices are in INR (₹) — free shipping over ₹4,150, otherwise a flat ₹829 fee.
   const subtotal = lineItems.reduce((sum, li) => sum + li.lineTotal, 0);
-  const shipping = subtotal > 50 ? 0 : 9.99;
-  const tax = Math.round(subtotal * 0.08 * 100) / 100;
-  const total = Math.round((subtotal + shipping + tax) * 100) / 100;
+  const shipping = subtotal > 4150 ? 0 : 829;
+  const tax = Math.round(subtotal * 0.08);
+  const total = Math.round(subtotal + shipping + tax);
 
   const order = {
     id: `ORD-${nanoid(8).toUpperCase()}`,

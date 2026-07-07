@@ -69,8 +69,8 @@ function productCardHTML(p){
       <a href="product.html?id=${p.id}"><span class="product-name">${p.name}</span></a>
       <span class="stars">${starString(p.rating)} <span class="muted">(${p.rating})</span></span>
       <div class="price-row">
-        <span class="price">$${p.price.toLocaleString()}</span>
-        ${p.oldPrice ? `<span class="price-old">$${p.oldPrice.toLocaleString()}</span>` : ""}
+        <span class="price">₹${p.price.toLocaleString('en-IN')}</span>
+        ${p.oldPrice ? `<span class="price-old">₹${p.oldPrice.toLocaleString('en-IN')}</span>` : ""}
       </div>
       <button class="btn btn-primary btn-block" onclick="addToCart('${p.id}')">Add to cart</button>
     </div>

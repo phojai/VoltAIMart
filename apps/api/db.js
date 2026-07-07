@@ -47,8 +47,8 @@ function seedInitialData(){
   const users = [
     {
       id: nanoid(10),
-      name: "Ava Admin",
-      email: "admin@voltaimart.com",
+      name: "Prasenjit Admin",
+      email: "prasenjit@voltmart.com",
       passwordHash: bcrypt.hashSync("admin123", 10),
       role: "admin",
       createdAt: now,

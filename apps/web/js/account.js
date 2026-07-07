@@ -2,7 +2,7 @@
    VoltAIMart — Customer account page
    ============================================================ */
 
-function fmtMoney(n){ return `$${Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`; }
+function fmtMoney(n){ return `₹${Number(n).toLocaleString('en-IN')}`; }
 function fmtDate(iso){ return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }); }
 
 function renderOrderCard(order){
