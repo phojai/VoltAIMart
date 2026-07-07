@@ -163,7 +163,10 @@
 <script src="js/catalog.js"></script>
 <script src="js/app.js"></script>
 <script src="js/aichat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@vapi-ai/web/dist/index.js"></script>
+<!-- dist/index.js doesn't exist in the published package (confirmed via jsdelivr's package
+     file listing) — the correct browser bundle is dist/vapi.min.js, which is what the
+     package's own jsdelivr/unpkg entrypoint metadata resolves to. -->
+<script src="https://cdn.jsdelivr.net/npm/@vapi-ai/web/dist/vapi.min.js"></script>
 <script src="js/voiceAgent.js"></script>
 <script>
 document.addEventListener("catalog:ready", () => {

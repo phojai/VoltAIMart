@@ -166,11 +166,20 @@
 
   function ensureVapiClient(){
     if (vapiClient) return vapiClient;
-    if (typeof window.Vapi !== "function"){
-      console.error("Vapi Web SDK isn't loaded — check the <script> tag in index.html.");
+    // The UMD bundle should expose a global `Vapi` constructor, but defend
+    // against it landing under `.default` (some bundlers wrap it) too.
+    const VapiCtor = typeof window.Vapi === "function"
+      ? window.Vapi
+      : (window.Vapi && typeof window.Vapi.default === "function" ? window.Vapi.default : null);
+    if (!VapiCtor){
+      console.error(
+        "Vapi Web SDK isn't loaded — window.Vapi is " + typeof window.Vapi + ". " +
+        "Check that the <script src=\"...@vapi-ai/web/dist/vapi.min.js\"> tag in index.html " +
+        "actually loaded (Network tab) — if it 404s, the package's CDN path may have changed again."
+      );
       return null;
     }
-    vapiClient = new window.Vapi(config.publicKey);
+    vapiClient = new VapiCtor(config.publicKey);
 
     vapiClient.on("call-start", () => {
       callActive = true;
