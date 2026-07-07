@@ -88,25 +88,61 @@
     return div.innerHTML;
   }
 
-  // Renders clickable product cards under a bot reply — the server already
-  // de-dupes whatever search_catalog surfaced this turn, so the assistant
-  // never has to (and never needs to) paste a raw link itself.
-  function appendProductChips(products){
+  // Renders clickable product cards under a bot reply — picture (the
+  // catalog's emoji icon, styled as a thumbnail — VoltAIMart has no photo
+  // uploads, see README), price, an Add to cart button that uses the same
+  // cart as the rest of the site (js/app.js), and a link to the product
+  // page. The server already de-dupes whatever search_catalog surfaced this
+  // turn, so the assistant never has to (and never needs to) paste a link.
+  function appendProductCards(products){
     if (!products || !products.length) return;
     const body = document.getElementById("aiChatBody");
     const row = document.createElement("div");
-    row.className = "ai-product-chips";
-    row.innerHTML = products.map(p => `
-      <a class="ai-product-chip" href="${escapeHtml(p.url || `product.html?id=${p.id}`)}">
-        <span class="ai-product-chip-icon">${escapeHtml(p.icon || "📦")}</span>
-        <span class="ai-product-chip-info">
-          <span class="ai-product-chip-name">${escapeHtml(p.name)}</span>
-          <span class="ai-product-chip-price">$${Number(p.price || 0).toLocaleString()}</span>
-        </span>
-      </a>
-    `).join("");
+    row.className = "ai-product-cards";
+    row.innerHTML = products.map(p => {
+      const url = escapeHtml(p.url || `product.html?id=${p.id}`);
+      const price = `$${Number(p.price || 0).toLocaleString()}`;
+      const oldPrice = p.oldPrice ? `<span class="ai-product-card-oldprice">$${Number(p.oldPrice).toLocaleString()}</span>` : "";
+      const rating = p.rating ? `<span class="ai-product-card-rating">★ ${escapeHtml(p.rating)}</span>` : "";
+      const badge = p.badge ? `<span class="ai-product-card-badge ${p.badge === "NEW" ? "new" : ""}">${escapeHtml(p.badge)}</span>` : "";
+      return `
+        <div class="ai-product-card">
+          <a class="ai-product-card-media" href="${url}" title="View ${escapeHtml(p.name)}">
+            ${badge}
+            <span class="ai-product-card-icon">${escapeHtml(p.icon || "📦")}</span>
+          </a>
+          <div class="ai-product-card-body">
+            <a class="ai-product-card-name" href="${url}">${escapeHtml(p.name)}</a>
+            <div class="ai-product-card-meta">
+              <span class="ai-product-card-price">${price}</span>
+              ${oldPrice}
+              ${rating}
+            </div>
+            <div class="ai-product-card-actions">
+              <button type="button" class="ai-product-card-add" data-add-to-cart="${escapeHtml(p.id)}">Add to cart</button>
+              <a class="ai-product-card-view" href="${url}">View →</a>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join("");
     body.appendChild(row);
     body.scrollTop = body.scrollHeight;
+
+    row.querySelectorAll("[data-add-to-cart]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.dataset.addToCart;
+        if (typeof addToCart === "function"){
+          addToCart(id);
+          const original = btn.textContent;
+          btn.textContent = "Added ✓";
+          btn.disabled = true;
+          setTimeout(() => { btn.textContent = original; btn.disabled = false; }, 1500);
+        } else if (typeof showToast === "function"){
+          showToast("Couldn't add to cart from here — open the product page.");
+        }
+      });
+    });
   }
 
   function appendTyping(){
@@ -158,7 +194,7 @@
       }
       const reply = (data && data.reply) || "…";
       appendMessage("bot", reply);
-      appendProductChips(data && data.products);
+      appendProductCards(data && data.products);
       history.push({ role: "assistant", content: reply });
     } catch (err){
       removeTyping();

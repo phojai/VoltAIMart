@@ -841,38 +841,62 @@ select.select-sort{
 }
 
 /* Clickable product cards the assistant attaches under a reply — rendered by
-   our own code from search_catalog results, not left to the model to link. */
-.ai-product-chips{
-  display:flex; flex-direction:column; gap:6px;
+   our own code from search_catalog results, not left to the model to link.
+   The "picture" is the catalog's emoji icon styled as a thumbnail — VoltAIMart
+   has no photo uploads (see README), so this matches the rest of the site. */
+.ai-product-cards{
+  display:flex; flex-direction:column; gap:8px;
   margin:-2px 0 2px;
   align-self:flex-start;
   max-width:92%;
 }
-.ai-product-chip{
-  display:flex; align-items:center; gap:10px;
+.ai-product-card{
+  display:flex; gap:10px;
   background: rgba(255,255,255,0.04);
   border:1px solid var(--card-border);
-  border-radius:12px;
-  padding:8px 12px;
+  border-radius:14px;
+  padding:10px;
   transition:.15s;
 }
-.ai-product-chip:hover{
-  background: var(--card-bg-hover);
-  border-color: rgba(124,92,255,0.4);
-  transform:translateY(-1px);
-}
-.ai-product-chip-icon{
-  width:30px; height:30px; border-radius:8px;
-  background: rgba(255,255,255,0.05);
+.ai-product-card:hover{border-color: rgba(124,92,255,0.4);}
+.ai-product-card-media{
+  position:relative;
+  width:52px; height:52px; border-radius:10px; flex-shrink:0;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(232,152,61,0.16), transparent 55%),
+    radial-gradient(circle at 80% 80%, rgba(124,92,255,0.18), transparent 55%),
+    rgba(255,255,255,0.03);
   display:flex; align-items:center; justify-content:center;
-  font-size:15px; flex-shrink:0;
 }
-.ai-product-chip-info{display:flex; flex-direction:column; gap:1px; min-width:0;}
-.ai-product-chip-name{
+.ai-product-card-icon{font-size:24px;}
+.ai-product-card-badge{
+  position:absolute; top:-5px; left:-5px;
+  font-size:9px; font-weight:800; letter-spacing:.02em;
+  padding:2px 6px; border-radius:999px;
+  background: var(--danger); color:#fff;
+}
+.ai-product-card-badge.new{background: var(--violet);}
+.ai-product-card-body{display:flex; flex-direction:column; gap:4px; min-width:0; flex:1;}
+.ai-product-card-name{
   font-size:13px; font-weight:700; color: var(--text-primary);
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
 }
-.ai-product-chip-price{font-size:12px; color: var(--accent-light); font-weight:600;}
+.ai-product-card-meta{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+.ai-product-card-price{font-size:13px; color: var(--accent-light); font-weight:700;}
+.ai-product-card-oldprice{font-size:11px; color: var(--text-tertiary); text-decoration:line-through;}
+.ai-product-card-rating{font-size:11px; color: var(--text-tertiary);}
+.ai-product-card-actions{display:flex; align-items:center; gap:12px; margin-top:2px;}
+.ai-product-card-add{
+  font-size:12px; font-weight:700;
+  padding:6px 12px; border-radius:999px;
+  background: linear-gradient(135deg, var(--accent), var(--violet));
+  color:#fff; border:none; cursor:pointer;
+  transition:.15s;
+}
+.ai-product-card-add:hover{transform:translateY(-1px);}
+.ai-product-card-add:disabled{opacity:.7; cursor:default; transform:none;}
+.ai-product-card-view{font-size:12px; font-weight:600; color: var(--text-secondary);}
+.ai-product-card-view:hover{color: var(--text-primary);}
 .ai-chat-input-row{
   display:flex; align-items:center; gap:8px;
   padding:12px 14px;
