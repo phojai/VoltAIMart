@@ -114,7 +114,32 @@ router.post("/", async (req, res) => {
         },
       },
     });
-    const products = collectProductsFromToolLog(result.toolLog);
+    let products = collectProductsFromToolLog(result.toolLog);
+
+    // Safety net: if the model never called search_catalog this turn (or it
+    // came back empty), run the user's own message straight through the same
+    // catalog search directly. This means a real match always surfaces as a
+    // card even if the model's text claims it "couldn't find" something —
+    // reliability doesn't depend on the model remembering to use its tool.
+    if (!products.length){
+      const lastUserMsg = messages[messages.length - 1];
+      if (lastUserMsg && lastUserMsg.role === "user"){
+        products = searchCatalog(db, { q: lastUserMsg.content }).slice(0, 4).map(p => ({
+          id: p.id,
+          name: p.name,
+          category: p.category,
+          department: p.department,
+          price: p.price,
+          oldPrice: p.oldPrice,
+          rating: p.rating,
+          tagline: p.tagline,
+          badge: p.badge,
+          icon: p.icon,
+          url: `product.html?id=${p.id}`,
+        }));
+      }
+    }
+
     res.json({ reply: result.text, toolCalls: result.toolLog, products });
   } catch (err){
     console.error("Chat error:", err);
