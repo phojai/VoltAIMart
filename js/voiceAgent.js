@@ -232,16 +232,44 @@
   }
 
   /* ---------------- Simulated mode (free, browser-based, hardcoded) ---------------- */
+  // The Web Speech API has no real "gender" field on voices, only name/lang —
+  // so we match against known female voice names shipped by the major
+  // browsers/OSes (Chrome, Edge, Safari, Android). Falls back gracefully to
+  // any English voice, then any voice at all, if none of these are installed.
+  const FEMALE_VOICE_HINTS = [
+    "female", "samantha", "victoria", "karen", "moira", "tessa", "fiona", "susan",
+    "allison", "serena", "aria", "jenny", "michelle", "emma", "olivia", "salli",
+    "joanna", "kendra", "kimberly", "ivy", "kathy", "amelie", "audrey", "catherine",
+    "hazel", "shelley", "sandy", "princess", "zira", "google us english", "google uk english female",
+  ];
+
+  function pickVoice(voices){
+    if (!voices || !voices.length) return null;
+    const english = voices.filter(v => /^en([-_]|$)/i.test(v.lang));
+    const pool = english.length ? english : voices;
+    const female = pool.find(v => FEMALE_VOICE_HINTS.some(hint => v.name.toLowerCase().includes(hint)));
+    return female || pool.find(v => /en-US|en_GB|en-GB/i.test(v.lang)) || pool[0];
+  }
+
+  function speakWithVoice(text){
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.rate = 1.02;
+    utter.pitch = 1.05; // a touch higher — reads more feminine if no named voice matches
+    const preferred = pickVoice(window.speechSynthesis.getVoices());
+    if (preferred) utter.voice = preferred;
+    window.speechSynthesis.speak(utter);
+  }
+
   function speak(text){
     if (!window.speechSynthesis) return;
     window.speechSynthesis.cancel();
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.rate = 1.02;
-    utter.pitch = 1.0;
-    const voices = window.speechSynthesis.getVoices();
-    const preferred = voices.find(v => /en-US|en_GB|en-GB/.test(v.lang)) || voices[0];
-    if (preferred) utter.voice = preferred;
-    window.speechSynthesis.speak(utter);
+    // Some browsers populate the voice list asynchronously on first use.
+    if (!window.speechSynthesis.getVoices().length){
+      window.speechSynthesis.onvoiceschanged = () => speakWithVoice(text);
+      window.speechSynthesis.getVoices();
+    } else {
+      speakWithVoice(text);
+    }
   }
 
   function handleSimulatedUtterance(rawText){
