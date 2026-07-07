@@ -60,7 +60,7 @@ async function webSearch(query, apiKey){
 
 // POST /api/chat — public (no login required to chat with VoltAI)
 router.post("/", async (req, res) => {
-  const db = readDB();
+  const db = await readDB();
   const settings = db.settings;
   const provider = settings.llmProvider;
   const apiKey = decryptSecret(settings.apiKeys[provider]);

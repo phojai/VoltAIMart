@@ -7,7 +7,7 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 
-const filePath = path.join(__dirname, "..", "js", "products-data.js");
+const filePath = path.join(__dirname, "..", "public", "js", "products-data.js");
 const code = fs.readFileSync(filePath, "utf8");
 // Top-level `const`/`let` bindings aren't exposed as properties on the
 // vm context object, so append explicit assignments in the SAME script

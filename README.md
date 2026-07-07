@@ -51,7 +51,7 @@ You can also sign up a brand-new customer account from the login page — new ac
 
 **Stub / out of scope for a prototype:**
 - No real payment processing — "Checkout" creates an order record but doesn't charge a card
-- Storage is a single JSON file (`server/data/db.json`), not a production database — fine for a demo, swap for Postgres/etc. before going live
+- Storage defaults to a single JSON file (`server/data/db.json`) locally — see "Deploying to Vercel" below for the swap needed to persist data on serverless hosting
 - No email verification / password reset flow
 - No file uploads for product images — products use an emoji as their "icon"
 
@@ -60,32 +60,47 @@ You can also sign up a brand-new customer account from the login page — new ac
 ```
 electrostore/
 ├── server/                  Express backend
-│   ├── server.js            entry point — serves the frontend + mounts /api routes
-│   ├── db.js                tiny JSON-file datastore (reads/writes server/data/db.json)
-│   ├── seedData.js          loads the initial catalog from js/products-data.js
+│   ├── server.js            entry point — serves public/ + mounts /api routes
+│   ├── db.js                datastore interface (reads/writes one JSON blob via store.js)
+│   ├── store.js             storage backend: local server/data/db.json, or Upstash Redis on Vercel
+│   ├── seedData.js          loads the initial catalog from public/js/products-data.js
 │   ├── middleware/auth.js   JWT verification + role guards
 │   ├── lib/catalogSearch.js shared product search/filter (used by /api/products and the chat tool)
 │   ├── lib/llm.js           tool-calling loop for Claude / OpenAI / Gemini
 │   └── routes/              auth, products, orders, users, meta, chat, settings
-├── index.html / products.html / product.html / cart.html   storefront
-├── login.html                                               login + sign up
-├── dashboard.html                                           admin/agent back office (+ AI Settings tab)
-├── account.html                                              customer order history
-├── js/
-│   ├── api.js         shared fetch client (auth headers, token storage, helpers)
-│   ├── catalog.js      loads live product data from the API for the storefront
-│   ├── app.js          cart (localStorage), nav, hamburger drawer
-│   ├── aichat.js        AI chat FAB + panel (calls /api/chat)
-│   ├── voice.js        unused legacy voice assistant, superseded by aichat.js
-│   ├── dashboard.js     admin/agent dashboard logic
-│   └── account.js       customer account page logic
-└── css/style.css
+└── public/                  everything served to the browser (must stay under public/ — see below)
+    ├── index.html / products.html / product.html / cart.html   storefront
+    ├── login.html                                               login + sign up
+    ├── dashboard.html                                           admin/agent back office (+ AI Settings tab)
+    ├── account.html                                              customer order history
+    ├── js/
+    │   ├── api.js         shared fetch client (auth headers, token storage, helpers)
+    │   ├── catalog.js      loads live product data from the API for the storefront
+    │   ├── app.js          cart (localStorage), nav, hamburger drawer
+    │   ├── aichat.js        AI chat FAB + panel (calls /api/chat)
+    │   ├── voice.js        unused legacy voice assistant, superseded by aichat.js
+    │   ├── dashboard.js     admin/agent dashboard logic
+    │   └── account.js       customer account page logic
+    └── css/style.css
 ```
 
 ## Resetting the demo data
 
-The database is a plain JSON file at `server/data/db.json`. To wipe it back to the original 3 users / 24 products / 0 orders:
+To wipe the datastore back to the original 3 users / 24 products / 0 orders:
 
 ```bash
-node -e "require('./server/db').resetDB()"
+node -e "require('./server/db').resetDB().then(() => console.log('reset done'))"
 ```
+
+## Deploying to Vercel
+
+This app runs as a normal Express server locally, but Vercel deploys it as a serverless Function, which changes two things:
+
+1. **Static files must live under `public/`.** Vercel serves anything in `public/**` directly from its CDN and ignores `express.static()` entirely — this repo is already laid out that way (see above), so nothing to change here as long as new pages/assets are added inside `public/`.
+2. **The filesystem is read-only** (only `/tmp` is writable, and it's wiped between invocations). `server/data/db.json` can't be used as real storage there, so `server/store.js` automatically switches to **Upstash Redis** whenever `KV_REST_API_URL` / `KV_REST_API_TOKEN` are present in the environment — no code changes needed, just connect a database:
+
+   - In the Vercel dashboard, open your project → **Storage** tab → **Create Database** → **Upstash** (free tier: 256MB, 500K commands/month) → connect it to this project.
+   - Vercel automatically injects `KV_REST_API_URL` / `KV_REST_API_TOKEN` into the project's environment — redeploy so the Function picks them up.
+   - Without a connected database, the app still deploys and reads/browses fine, but any write (sign-up, checkout, saving AI Settings / API keys, editing a product) will silently fail to persist between requests.
+
+Locally, none of this matters — `npm start` always uses the `server/data/db.json` file since those env vars won't be set on your machine.

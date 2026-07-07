@@ -55,8 +55,8 @@ function publicSettings(settings){
 }
 
 // GET /api/settings — admin only
-router.get("/", requireRole("admin"), (req, res) => {
-  const db = readDB();
+router.get("/", requireRole("admin"), async (req, res) => {
+  const db = await readDB();
   res.json({ settings: publicSettings(db.settings) });
 });
 
@@ -64,8 +64,8 @@ router.get("/", requireRole("admin"), (req, res) => {
 // so the admin doesn't have to re-paste a key just to change the provider dropdown.
 // Provider keys and the web-search key are encrypted at rest (see server/lib/secretCrypto.js).
 // Pass forgetKeys: ["anthropic", ...] and/or webSearch.forget: true to clear a saved key.
-router.put("/", requireRole("admin"), (req, res) => {
-  const db = readDB();
+router.put("/", requireRole("admin"), async (req, res) => {
+  const db = await readDB();
   const body = req.body || {};
 
   if (body.llmProvider && PROVIDERS.includes(body.llmProvider)){
@@ -127,7 +127,7 @@ router.put("/", requireRole("admin"), (req, res) => {
   }
 
   db.settings.updatedAt = new Date().toISOString();
-  writeDB(db);
+  await writeDB(db);
   res.json({ settings: publicSettings(db.settings) });
 });
 

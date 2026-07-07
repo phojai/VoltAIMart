@@ -7,24 +7,24 @@ const { searchCatalog } = require("../lib/catalogSearch");
 const router = express.Router();
 
 // GET /api/products?department=&category=&q=  — public
-router.get("/", (req, res) => {
-  const db = readDB();
+router.get("/", async (req, res) => {
+  const db = await readDB();
   const { department, category, q } = req.query;
   const list = searchCatalog(db, { department, category, q });
   res.json({ products: list });
 });
 
 // GET /api/products/:id — public
-router.get("/:id", (req, res) => {
-  const db = readDB();
+router.get("/:id", async (req, res) => {
+  const db = await readDB();
   const product = db.products.find(p => p.id === req.params.id);
   if (!product) return res.status(404).json({ error: "Product not found." });
   res.json({ product });
 });
 
 // POST /api/products — admin or agent
-router.post("/", requireRole("admin", "agent"), (req, res) => {
-  const db = readDB();
+router.post("/", requireRole("admin", "agent"), async (req, res) => {
+  const db = await readDB();
   const body = req.body || {};
 
   if (!body.name || !body.category || body.price == null){
@@ -56,13 +56,13 @@ router.post("/", requireRole("admin", "agent"), (req, res) => {
   };
 
   db.products.unshift(product);
-  writeDB(db);
+  await writeDB(db);
   res.status(201).json({ product });
 });
 
 // PUT /api/products/:id — admin or agent
-router.put("/:id", requireRole("admin", "agent"), (req, res) => {
-  const db = readDB();
+router.put("/:id", requireRole("admin", "agent"), async (req, res) => {
+  const db = await readDB();
   const idx = db.products.findIndex(p => p.id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: "Product not found." });
 
@@ -80,17 +80,17 @@ router.put("/:id", requireRole("admin", "agent"), (req, res) => {
     department: categoryMeta ? categoryMeta.department : existing.department,
     updatedAt: new Date().toISOString(),
   };
-  writeDB(db);
+  await writeDB(db);
   res.json({ product: db.products[idx] });
 });
 
 // DELETE /api/products/:id — admin or agent
-router.delete("/:id", requireRole("admin", "agent"), (req, res) => {
-  const db = readDB();
+router.delete("/:id", requireRole("admin", "agent"), async (req, res) => {
+  const db = await readDB();
   const idx = db.products.findIndex(p => p.id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: "Product not found." });
   const [removed] = db.products.splice(idx, 1);
-  writeDB(db);
+  await writeDB(db);
   res.json({ product: removed });
 });
 

@@ -7,8 +7,8 @@ const router = express.Router();
 const STATUSES = ["processing", "shipped", "delivered", "cancelled"];
 
 // GET /api/orders — admin/agent see all, customer sees only their own
-router.get("/", requireAuth, (req, res) => {
-  const db = readDB();
+router.get("/", requireAuth, async (req, res) => {
+  const db = await readDB();
   let list = db.orders.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   if (req.user.role === "customer"){
     list = list.filter(o => o.userId === req.user.id);
@@ -17,8 +17,8 @@ router.get("/", requireAuth, (req, res) => {
 });
 
 // GET /api/orders/:id — owner, or admin/agent
-router.get("/:id", requireAuth, (req, res) => {
-  const db = readDB();
+router.get("/:id", requireAuth, async (req, res) => {
+  const db = await readDB();
   const order = db.orders.find(o => o.id === req.params.id);
   if (!order) return res.status(404).json({ error: "Order not found." });
   if (req.user.role === "customer" && order.userId !== req.user.id){
@@ -28,8 +28,8 @@ router.get("/:id", requireAuth, (req, res) => {
 });
 
 // POST /api/orders — any authenticated user; { items: [{ productId, qty }] }
-router.post("/", requireAuth, (req, res) => {
-  const db = readDB();
+router.post("/", requireAuth, async (req, res) => {
+  const db = await readDB();
   const items = Array.isArray(req.body?.items) ? req.body.items : [];
   if (!items.length){
     return res.status(400).json({ error: "Order must include at least one item." });
@@ -74,13 +74,13 @@ router.post("/", requireAuth, (req, res) => {
   };
 
   db.orders.push(order);
-  writeDB(db);
+  await writeDB(db);
   res.status(201).json({ order });
 });
 
 // PATCH /api/orders/:id — admin/agent only; update order status
-router.patch("/:id", requireRole("admin", "agent"), (req, res) => {
-  const db = readDB();
+router.patch("/:id", requireRole("admin", "agent"), async (req, res) => {
+  const db = await readDB();
   const idx = db.orders.findIndex(o => o.id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: "Order not found." });
 
@@ -90,7 +90,7 @@ router.patch("/:id", requireRole("admin", "agent"), (req, res) => {
   }
   db.orders[idx].status = status;
   db.orders[idx].updatedAt = new Date().toISOString();
-  writeDB(db);
+  await writeDB(db);
   res.json({ order: db.orders[idx] });
 });
 

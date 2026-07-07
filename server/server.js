@@ -15,6 +15,11 @@ const voiceAgentRoutes = require("./routes/voiceAgent.routes");
 const app = express();
 const PORT = process.env.PORT || 4000;
 const ROOT = path.join(__dirname, "..");
+// Storefront + back-office frontend lives in /public. Locally, Express serves
+// it directly (below). On Vercel, express.static() is ignored entirely — its
+// CDN serves anything under public/** on its own — so this same layout works
+// unmodified in both places. See: https://vercel.com/docs/frameworks/backend/express
+const PUBLIC_DIR = path.join(ROOT, "public");
 
 app.use(cors());
 app.use(express.json());
@@ -31,14 +36,15 @@ app.use("/api/voice-agent", voiceAgentRoutes);
 
 app.get("/api/health", (req, res) => res.json({ ok: true, service: "voltaimart-api" }));
 
-// Serve the storefront + back-office frontend as static files.
-app.use(express.static(ROOT));
+// Serve the storefront + back-office frontend as static files (local dev only
+// — on Vercel this line never runs for these paths, its CDN intercepts them).
+app.use(express.static(PUBLIC_DIR));
 
 app.use((req, res) => {
   if (req.path.startsWith("/api/")){
     return res.status(404).json({ error: "Not found." });
   }
-  res.status(404).sendFile(path.join(ROOT, "index.html"));
+  res.status(404).sendFile(path.join(PUBLIC_DIR, "index.html"));
 });
 
 app.listen(PORT, () => {

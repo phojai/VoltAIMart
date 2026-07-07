@@ -1,16 +1,14 @@
 /* ============================================================
-   VoltAIMart — tiny JSON-file datastore.
-   No external DB required: everything persists to
-   server/data/db.json. Fine for a prototype / demo backend;
-   swap for a real database before going to production.
+   VoltAIMart — tiny JSON-blob datastore (users, products, orders,
+   settings all in one object). Storage backend is pluggable — see
+   server/store.js: a local file by default, or Upstash Redis on
+   Vercel (where the filesystem can't be written to). readDB/writeDB
+   are async so either backend works behind the same interface.
    ============================================================ */
-const fs = require("fs");
-const path = require("path");
 const bcrypt = require("bcryptjs");
 const { nanoid } = require("nanoid");
 const { DEPARTMENTS, CATEGORIES, PRODUCTS } = require("./seedData");
-
-const DB_PATH = path.join(__dirname, "data", "db.json");
+const store = require("./store");
 
 function defaultSettings(){
   return {
@@ -92,41 +90,38 @@ function seedInitialData(){
   };
 }
 
-function ensureDbFile(){
-  if (!fs.existsSync(DB_PATH)){
-    fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
-    fs.writeFileSync(DB_PATH, JSON.stringify(seedInitialData(), null, 2));
+async function readDB(){
+  let data = await store.get();
+  if (!data){
+    data = seedInitialData();
+    await store.set(data);
   }
-}
-
-function readDB(){
-  ensureDbFile();
-  const data = JSON.parse(fs.readFileSync(DB_PATH, "utf8"));
   // Migration: older db.json files (from before AI chat existed) won't have settings.
   if (!data.settings){
     data.settings = defaultSettings();
-    writeDB(data);
+    await writeDB(data);
   } else if (!data.settings.vapi){
     // Migration: db.json created before the Vapi voice agent existed.
     data.settings.vapi = defaultSettings().vapi;
-    writeDB(data);
+    await writeDB(data);
   } else if (!data.settings.vapi.agentMode){
     // Migration: db.json created before the simulated/Vapi mode toggle existed.
     // Default to "vapi" here (not "simulated") so installs that already had a
     // working Vapi key keep behaving exactly as before after this update.
     data.settings.vapi.agentMode = data.settings.vapi.publicKey ? "vapi" : "simulated";
-    writeDB(data);
+    await writeDB(data);
   }
   return data;
 }
 
-function writeDB(data){
-  fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
+async function writeDB(data){
+  await store.set(data);
 }
 
-function resetDB(){
-  fs.writeFileSync(DB_PATH, JSON.stringify(seedInitialData(), null, 2));
+async function resetDB(){
+  const data = seedInitialData();
+  await store.set(data);
   return readDB();
 }
 
-module.exports = { readDB, writeDB, resetDB, DB_PATH };
+module.exports = { readDB, writeDB, resetDB, DB_PATH: store.DB_PATH };

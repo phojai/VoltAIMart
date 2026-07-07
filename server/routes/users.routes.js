@@ -10,14 +10,14 @@ function publicUser(u){
 }
 
 // GET /api/users — admin only
-router.get("/", requireRole("admin"), (req, res) => {
-  const db = readDB();
+router.get("/", requireRole("admin"), async (req, res) => {
+  const db = await readDB();
   res.json({ users: db.users.map(publicUser) });
 });
 
 // PATCH /api/users/:id — admin only; currently supports changing role
-router.patch("/:id", requireRole("admin"), (req, res) => {
-  const db = readDB();
+router.patch("/:id", requireRole("admin"), async (req, res) => {
+  const db = await readDB();
   const idx = db.users.findIndex(u => u.id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: "User not found." });
 
@@ -31,7 +31,7 @@ router.patch("/:id", requireRole("admin"), (req, res) => {
     }
     db.users[idx].role = role;
   }
-  writeDB(db);
+  await writeDB(db);
   res.json({ user: publicUser(db.users[idx]) });
 });
 
