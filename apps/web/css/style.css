@@ -393,6 +393,17 @@ h1,h2,h3,h4{margin:0; font-weight:800; letter-spacing:-.01em;}
 .price{font-size:17px; font-weight:800; color: var(--text-primary);}
 .price-old{font-size:13px; color: var(--text-tertiary); text-decoration:line-through;}
 .product-body .btn{margin-top:10px;}
+.product-thumb-wrap{position:relative;}
+.wishlist-btn{
+  position:absolute; top:10px; right:10px; z-index:2;
+  width:32px; height:32px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background: rgba(8,7,12,0.55); border:1px solid var(--card-border);
+  color: var(--text-primary); font-size:15px; cursor:pointer;
+  transition:.15s;
+}
+.wishlist-btn:hover{background: rgba(8,7,12,0.8);}
+.wishlist-btn.active{color: var(--danger); border-color: var(--danger);}
 
 /* ---------- Hero ---------- */
 .hero{
@@ -602,6 +613,78 @@ select.select-sort{
   color: var(--text-secondary);
 }
 .empty-state .icon{font-size:52px; margin-bottom:18px; display:block;}
+
+/* ---------- Checkout page ---------- */
+.checkout-steps{display:flex; align-items:center; gap:10px; margin-bottom:28px;}
+.checkout-step{display:flex; align-items:center; gap:10px; font-size:13.5px; color: var(--text-tertiary); font-weight:700;}
+.checkout-step-num{
+  width:26px; height:26px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  border:1px solid var(--card-border); font-size:12.5px;
+}
+.checkout-step.active{color: var(--text-primary);}
+.checkout-step.active .checkout-step-num{background: var(--accent); border-color: var(--accent); color:#1a1206;}
+.checkout-step.done .checkout-step-num{background: var(--success); border-color: var(--success); color:#052e13;}
+.checkout-step-line{flex:1; max-width:60px; height:1px; background: var(--divider);}
+.checkout-note{
+  display:flex; align-items:center; gap:8px;
+  font-size:12.5px; color: var(--text-secondary);
+  background: rgba(255,255,255,0.03); border:1px solid var(--card-border);
+  border-radius:10px; padding:10px 14px; margin-top:16px;
+}
+
+/* ---------- Order status timeline ---------- */
+.order-timeline{display:flex; align-items:center; gap:6px; margin:14px 0;}
+.timeline-step{display:flex; align-items:center; gap:7px; font-size:12px; color: var(--text-tertiary); font-weight:700;}
+.timeline-dot{
+  width:18px; height:18px; border-radius:50%;
+  border:2px solid var(--card-border);
+  display:flex; align-items:center; justify-content:center;
+  font-size:10px;
+}
+.timeline-step.done{color: var(--text-secondary);}
+.timeline-step.done .timeline-dot{background: var(--success); border-color: var(--success); color:#052e13;}
+.timeline-step.current{color: var(--text-primary);}
+.timeline-step.current .timeline-dot{background: var(--accent); border-color: var(--accent); color:#1a1206;}
+.timeline-line{flex:1; min-width:18px; max-width:48px; height:2px; background: var(--divider); border-radius:1px;}
+.timeline-line.done{background: var(--success);}
+.order-cancelled-banner{
+  font-size:12.5px; font-weight:700; color: var(--danger);
+  background: rgba(242,99,122,0.12); border:1px solid rgba(242,99,122,0.35);
+  border-radius:10px; padding:8px 12px; margin:14px 0;
+}
+
+/* ---------- Notifications (simulated email inbox) ---------- */
+.notif-item{
+  border:1px solid var(--card-border);
+  background: var(--card-bg);
+  border-radius:12px;
+  padding:14px 16px;
+  margin-bottom:10px;
+}
+.notif-item.unread{border-color: rgba(232,152,61,0.5);}
+.notif-subject{font-weight:700; font-size:14px; display:flex; align-items:center; gap:8px;}
+.notif-unread-dot{width:8px; height:8px; border-radius:50%; background: var(--accent); flex-shrink:0;}
+.notif-body{font-size:12.5px; color: var(--text-secondary); white-space:pre-wrap; margin-top:8px; display:none;}
+.notif-item.open .notif-body{display:block;}
+
+/* ---------- Address book ---------- */
+.address-card{
+  border:1px solid var(--card-border);
+  background: var(--card-bg);
+  border-radius:12px;
+  padding:14px 16px;
+  margin-bottom:10px;
+  font-size:13.5px;
+  position:relative;
+  cursor:pointer;
+  transition:.15s;
+}
+.address-card:hover{background: var(--card-bg-hover);}
+.address-card.selected{border-color: var(--accent); background: var(--accent-dim);}
+.address-card .address-name{font-weight:700; margin-bottom:4px;}
+.address-card .address-lines{color: var(--text-secondary); line-height:1.5;}
+.address-card .address-actions{position:absolute; top:10px; right:12px; display:flex; gap:6px;}
 
 /* ---------- Voice Assistant Overlay ---------- */
 .voice-fab{
@@ -1524,6 +1607,8 @@ select.select-sort{
   gap:0 16px;
 }
 .modal-panel-wide{width:min(720px, 100%);}
+.star-picker{display:flex; gap:6px; font-size:26px; color: var(--text-tertiary); cursor:pointer;}
+.star-picker span.filled{color: var(--accent);}
 
 /* ---------- AI Provider Settings modal ---------- */
 .provider-summary-row{
@@ -1701,7 +1786,9 @@ select.select-sort{
   gap:28px;
   align-items:start;
 }
-#profileCard{position:sticky; top:24px; text-align:left;}
+/* The left account column now stacks several cards (profile, edit form,
+   address book), so the old sticky positioning would overlap siblings. */
+#profileCard{text-align:left;}
 
 /* ---------- Responsive ---------- */
 @media (max-width: 980px){

@@ -35,4 +35,20 @@ router.patch("/:id", requireRole("admin"), async (req, res) => {
   res.json({ user: publicUser(db.users[idx]) });
 });
 
+// DELETE /api/users/:id — admin only; can't delete your own account.
+// The user's orders/reviews/notifications are kept for record-keeping;
+// their wishlist is removed.
+router.delete("/:id", requireRole("admin"), async (req, res) => {
+  const db = await readDB();
+  const idx = db.users.findIndex(u => u.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: "User not found." });
+  if (db.users[idx].id === req.user.id){
+    return res.status(400).json({ error: "You can't delete your own account." });
+  }
+  const [removed] = db.users.splice(idx, 1);
+  if (db.wishlists) delete db.wishlists[removed.id];
+  await writeDB(db);
+  res.json({ user: publicUser(removed) });
+});
+
 module.exports = router;

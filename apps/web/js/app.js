@@ -55,24 +55,66 @@ function starString(rating){
   return "★".repeat(full) + "☆".repeat(5 - full);
 }
 
+/* ---------------- Wishlist (server-persisted per logged-in user) ---------------- */
+let WISHLIST_IDS = new Set();
+
+async function refreshWishlistState(){
+  if (!isLoggedIn()){ WISHLIST_IDS = new Set(); return; }
+  try {
+    const ids = await Api.getWishlist();
+    WISHLIST_IDS = new Set(ids);
+    paintWishlistButtons();
+  } catch(e){ /* best-effort — leave WISHLIST_IDS as-is */ }
+}
+function paintWishlistButtons(){
+  document.querySelectorAll("[data-wishlist]").forEach(btn => {
+    const active = WISHLIST_IDS.has(btn.dataset.wishlist);
+    btn.classList.toggle("active", active);
+    btn.textContent = active ? "♥" : "♡";
+  });
+}
+async function toggleWishlist(productId){
+  if (!isLoggedIn()){
+    showToast("Please log in to save items.");
+    setTimeout(() => { window.location.href = `login.html?redirect=${encodeURIComponent(location.pathname + location.search)}`; }, 900);
+    return;
+  }
+  const wasSaved = WISHLIST_IDS.has(productId);
+  if (wasSaved) WISHLIST_IDS.delete(productId); else WISHLIST_IDS.add(productId);
+  paintWishlistButtons();
+  try {
+    if (wasSaved) await Api.removeFromWishlist(productId);
+    else await Api.addToWishlist(productId);
+  } catch(err){
+    if (wasSaved) WISHLIST_IDS.add(productId); else WISHLIST_IDS.delete(productId);
+    paintWishlistButtons();
+    showToast(err.message || "Couldn't update wishlist.");
+  }
+}
+
 function productCardHTML(p){
   return `
   <div class="product-card">
-    <a href="product.html?id=${p.id}">
-      <div class="product-thumb">
-        ${p.badge ? `<span class="tag ${p.badge === 'NEW' ? 'new' : ''}">${p.badge}</span>` : ""}
-        <span>${p.icon}</span>
-      </div>
-    </a>
+    <div class="product-thumb-wrap">
+      <a href="product.html?id=${p.id}">
+        <div class="product-thumb">
+          ${p.badge ? `<span class="tag ${p.badge === 'NEW' ? 'new' : ''}">${p.badge}</span>` : ""}
+          <span>${p.icon}</span>
+        </div>
+      </a>
+      <button class="wishlist-btn ${WISHLIST_IDS.has(p.id) ? 'active' : ''}" data-wishlist="${p.id}" type="button" onclick="toggleWishlist('${p.id}')" title="Save to wishlist">${WISHLIST_IDS.has(p.id) ? "♥" : "♡"}</button>
+    </div>
     <div class="product-body">
       <span class="product-cat">${categoryLabel(p.category)}</span>
       <a href="product.html?id=${p.id}"><span class="product-name">${p.name}</span></a>
-      <span class="stars">${starString(p.rating)} <span class="muted">(${p.rating})</span></span>
+      <span class="stars">${starString(p.rating)} <span class="muted">(${p.rating}${p.reviewCount ? ` · ${p.reviewCount} review${p.reviewCount === 1 ? "" : "s"}` : ""})</span></span>
       <div class="price-row">
         <span class="price">₹${p.price.toLocaleString('en-IN')}</span>
         ${p.oldPrice ? `<span class="price-old">₹${p.oldPrice.toLocaleString('en-IN')}</span>` : ""}
       </div>
-      <button class="btn btn-primary btn-block" onclick="addToCart('${p.id}')">Add to cart</button>
+      ${p.stock === 0
+        ? `<button class="btn btn-ghost btn-block" disabled>Out of stock</button>`
+        : `<button class="btn btn-primary btn-block" onclick="addToCart('${p.id}')">Add to cart</button>`}
     </div>
   </div>`;
 }
@@ -141,7 +183,8 @@ function injectDrawer(){
     </nav>
     <div class="drawer-footer">
       <a href="cart.html">🛒 Cart</a>
-      <a href="#">📦 Track order</a>
+      <a href="wishlist.html">🤍 Wishlist</a>
+      <a href="track.html">📦 Track order</a>
       <a href="#">💬 Support</a>
     </div>
   `;
@@ -179,3 +222,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // The drawer lists departments/categories, which come from the live catalog API.
 document.addEventListener("catalog:ready", injectDrawer);
+document.addEventListener("catalog:ready", refreshWishlistState);

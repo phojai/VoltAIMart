@@ -26,7 +26,7 @@ const CATEGORIES = [
 
 const PRODUCTS = [
   {
-    id: "p1", name: "Volt Aria X1 Smartphone", category: "smartphones",
+    id: "p1", stock: 42, name: "Volt Aria X1 Smartphone", category: "smartphones",
     price: 74617, oldPrice: 82917, rating: 4.8, icon: "📱", badge: "SALE",
     tagline: "6.7\" OLED · Triple camera · 5G",
     description: "Flagship smartphone with a 6.7-inch adaptive OLED display, triple 50MP camera system, and all-day battery life. Runs on the Volt A5 chip for fast, fluid performance.",
@@ -34,7 +34,7 @@ const PRODUCTS = [
     keywords: ["phone", "smartphone", "mobile", "aria"]
   },
   {
-    id: "p2", name: "Volt Pulse Mini", category: "smartphones",
+    id: "p2", stock: 65, name: "Volt Pulse Mini", category: "smartphones",
     price: 37267, rating: 4.4, icon: "📱",
     tagline: "Compact 5G phone, all-day battery",
     description: "A compact, affordable 5G smartphone built for everyday use — sharp display, dependable battery, and a clean interface.",
@@ -42,7 +42,7 @@ const PRODUCTS = [
     keywords: ["phone", "smartphone", "budget phone", "pulse"]
   },
   {
-    id: "p3", name: "Volt Book Pro 14", category: "laptops",
+    id: "p3", stock: 18, name: "Volt Book Pro 14", category: "laptops",
     price: 124417, rating: 4.9, icon: "💻", badge: "NEW",
     tagline: "14\" Retina · M-class chip · 18h battery",
     description: "Ultra-thin pro laptop with a stunning 14-inch Retina display, our fastest silicon yet, and 18 hours of real-world battery life.",
@@ -50,7 +50,7 @@ const PRODUCTS = [
     keywords: ["laptop", "notebook", "macbook", "book pro"]
   },
   {
-    id: "p4", name: "Volt Book Air 13", category: "laptops",
+    id: "p4", stock: 50, name: "Volt Book Air 13", category: "laptops",
     price: 82917, rating: 4.7, icon: "💻",
     tagline: "Ultralight everyday laptop",
     description: "The everyday laptop — impossibly light at just 1.1kg, with a full day of battery and a fanless silent design.",
@@ -58,7 +58,7 @@ const PRODUCTS = [
     keywords: ["laptop", "notebook", "air", "lightweight laptop"]
   },
   {
-    id: "p5", name: "Volt Gamer 16 RTX", category: "laptops",
+    id: "p5", stock: 3, name: "Volt Gamer 16 RTX", category: "laptops",
     price: 182517, oldPrice: 199117, rating: 4.6, icon: "💻", badge: "SALE",
     tagline: "16\" 240Hz · RTX graphics · RGB",
     description: "A no-compromise gaming laptop with a 240Hz QHD display, top-tier discrete graphics, and a per-key RGB keyboard.",
@@ -66,7 +66,7 @@ const PRODUCTS = [
     keywords: ["gaming laptop", "laptop", "gamer"]
   },
   {
-    id: "p6", name: "Volt Buds Pro", category: "headphones",
+    id: "p6", stock: 90, name: "Volt Buds Pro", category: "headphones",
     price: 16517, rating: 4.6, icon: "🎧", badge: "NEW",
     tagline: "Active noise cancelling earbuds",
     description: "True wireless earbuds with adaptive active noise cancellation, spatial audio, and a compact charging case.",
@@ -74,7 +74,7 @@ const PRODUCTS = [
     keywords: ["earbuds", "headphones", "earphones", "buds", "wireless earbuds"]
   },
   {
-    id: "p7", name: "Volt Sound Max Headphones", category: "headphones",
+    id: "p7", stock: 34, name: "Volt Sound Max Headphones", category: "headphones",
     price: 28967, rating: 4.8, icon: "🎧",
     tagline: "Over-ear · Studio-grade ANC",
     description: "Over-ear headphones tuned for studio-grade clarity, industry-leading noise cancellation, and 40-hour battery life.",
@@ -82,7 +82,7 @@ const PRODUCTS = [
     keywords: ["headphones", "over ear headphones", "sound max"]
   },
   {
-    id: "p8", name: "Volt Beam Speaker", category: "headphones",
+    id: "p8", stock: 0, name: "Volt Beam Speaker", category: "headphones",
     price: 10707, rating: 4.3, icon: "🔊",
     tagline: "Portable Bluetooth speaker, 360° sound",
     description: "A rugged, portable speaker delivering 360-degree sound with deep bass — waterproof and built for 20 hours of playback.",
@@ -90,7 +90,7 @@ const PRODUCTS = [
     keywords: ["speaker", "bluetooth speaker", "portable speaker"]
   },
   {
-    id: "p9", name: "Volt Watch Fit 3", category: "wearables",
+    id: "p9", stock: 55, name: "Volt Watch Fit 3", category: "wearables",
     price: 20667, rating: 4.5, icon: "⌚",
     tagline: "GPS · Heart rate · 7-day battery",
     description: "A fitness-first smartwatch with built-in GPS, continuous heart-rate and sleep tracking, and up to 7 days of battery.",
@@ -98,7 +98,7 @@ const PRODUCTS = [
     keywords: ["watch", "smartwatch", "fitness watch", "wearable"]
   },
   {
-    id: "p10", name: "Volt Watch Ultra", category: "wearables",
+    id: "p10", stock: 12, name: "Volt Watch Ultra", category: "wearables",
     price: 45567, oldPrice: 49717, rating: 4.7, icon: "⌚", badge: "SALE",
     tagline: "Titanium · Cellular · Dive-rated",
     description: "The rugged flagship watch — titanium case, cellular connectivity, and dive-rated water resistance for serious athletes.",
@@ -106,7 +106,7 @@ const PRODUCTS = [
     keywords: ["watch", "smartwatch", "ultra watch"]
   },
   {
-    id: "p11", name: "Volt Lens Z9 Camera", category: "cameras",
+    id: "p11", stock: 8, name: "Volt Lens Z9 Camera", category: "cameras",
     price: 157617, rating: 4.9, icon: "📷", badge: "NEW",
     tagline: "Mirrorless · 45MP · 8K video",
     description: "A professional mirrorless camera with a 45MP full-frame sensor, 8K video recording, and best-in-class autofocus.",
@@ -114,7 +114,7 @@ const PRODUCTS = [
     keywords: ["camera", "mirrorless camera", "z9"]
   },
   {
-    id: "p12", name: "Volt Action Cam 4K", category: "cameras",
+    id: "p12", stock: 27, name: "Volt Action Cam 4K", category: "cameras",
     price: 27307, rating: 4.4, icon: "🎥",
     tagline: "Waterproof action camera, 4K/120",
     description: "Compact, waterproof action camera capturing ultra-smooth 4K/120fps footage — built for every adventure.",
@@ -122,7 +122,7 @@ const PRODUCTS = [
     keywords: ["action camera", "camera", "gopro style camera"]
   },
   {
-    id: "p13", name: "Volt Pad Pro 12", category: "gaming",
+    id: "p13", stock: 40, name: "Volt Pad Pro 12", category: "gaming",
     price: 66317, rating: 4.6, icon: "🕹️",
     tagline: "12.9\" tablet · Console-grade gaming",
     description: "A 12.9-inch tablet with a 120Hz display and console-grade graphics performance — great for gaming, drawing, and streaming.",
@@ -130,7 +130,7 @@ const PRODUCTS = [
     keywords: ["tablet", "ipad", "gaming tablet"]
   },
   {
-    id: "p14", name: "Volt Controller Elite", category: "gaming",
+    id: "p14", stock: 60, name: "Volt Controller Elite", category: "gaming",
     price: 7387, rating: 4.5, icon: "🎮",
     tagline: "Wireless controller, swappable sticks",
     description: "A premium wireless controller with swappable analog sticks, customizable back paddles, and 30-hour battery life.",
@@ -138,7 +138,7 @@ const PRODUCTS = [
     keywords: ["controller", "gamepad", "gaming controller"]
   },
   {
-    id: "p15", name: "Volt Vision 65 OLED TV", category: "tv",
+    id: "p15", stock: 5, name: "Volt Vision 65 OLED TV", category: "tv",
     price: 149317, oldPrice: 165917, rating: 4.8, icon: "📺", badge: "SALE",
     tagline: "65\" 4K OLED · 144Hz · Dolby Vision",
     description: "A 65-inch 4K OLED TV with perfect blacks, a 144Hz refresh rate for gaming, and Dolby Vision / Atmos support.",
@@ -146,7 +146,7 @@ const PRODUCTS = [
     keywords: ["tv", "television", "oled tv", "smart tv"]
   },
   {
-    id: "p16", name: "Volt Hub Smart Speaker", category: "accessories",
+    id: "p16", stock: 75, name: "Volt Hub Smart Speaker", category: "accessories",
     price: 6557, rating: 4.2, icon: "🔈",
     tagline: "Voice assistant + smart home hub",
     description: "A compact smart speaker with built-in voice assistant and smart-home hub, so you can control your devices hands-free.",
@@ -156,7 +156,7 @@ const PRODUCTS = [
 
   /* ---------------- Fashion ---------------- */
   {
-    id: "f1", name: "Volt Essential Tee", category: "mens",
+    id: "f1", stock: 120, name: "Volt Essential Tee", category: "mens",
     price: 2407, rating: 4.5, icon: "👕", badge: "NEW",
     tagline: "100% organic cotton, everyday fit",
     description: "A soft, breathable everyday tee made from 100% organic cotton, cut for a relaxed modern fit.",
@@ -164,7 +164,7 @@ const PRODUCTS = [
     keywords: ["tee", "t-shirt", "shirt", "mens shirt", "top"]
   },
   {
-    id: "f2", name: "Volt Denim Jacket", category: "mens",
+    id: "f2", stock: 38, name: "Volt Denim Jacket", category: "mens",
     price: 7387, oldPrice: 9047, rating: 4.6, icon: "🧥", badge: "SALE",
     tagline: "Classic fit, stonewashed denim",
     description: "A timeless stonewashed denim jacket with a classic fit — layers over everything from tees to hoodies.",
@@ -172,7 +172,7 @@ const PRODUCTS = [
     keywords: ["jacket", "denim jacket", "mens jacket", "outerwear"]
   },
   {
-    id: "f3", name: "Volt Flow Midi Dress", category: "womens",
+    id: "f3", stock: 22, name: "Volt Flow Midi Dress", category: "womens",
     price: 5727, rating: 4.7, icon: "👗", badge: "NEW",
     tagline: "Lightweight, flowy, breathable",
     description: "A lightweight midi dress with a flowy silhouette, breathable fabric, and an adjustable waist tie.",
@@ -180,7 +180,7 @@ const PRODUCTS = [
     keywords: ["dress", "midi dress", "womens dress"]
   },
   {
-    id: "f4", name: "Volt Wide-Leg Trousers", category: "womens",
+    id: "f4", stock: 45, name: "Volt Wide-Leg Trousers", category: "womens",
     price: 4897, rating: 4.4, icon: "👖",
     tagline: "High-rise, tailored wide-leg",
     description: "High-rise wide-leg trousers with a tailored waistband — dresses up or down effortlessly.",
@@ -188,7 +188,7 @@ const PRODUCTS = [
     keywords: ["trousers", "pants", "womens pants", "wide leg pants"]
   },
   {
-    id: "f5", name: "Volt Runner Sneakers", category: "shoes",
+    id: "f5", stock: 0, name: "Volt Runner Sneakers", category: "shoes",
     price: 8217, rating: 4.6, icon: "👟", badge: "NEW",
     tagline: "Lightweight everyday runners",
     description: "Lightweight everyday sneakers with responsive cushioning and a breathable knit upper.",
@@ -196,7 +196,7 @@ const PRODUCTS = [
     keywords: ["sneakers", "shoes", "running shoes", "trainers"]
   },
   {
-    id: "f6", name: "Volt Leather Chelsea Boots", category: "shoes",
+    id: "f6", stock: 15, name: "Volt Leather Chelsea Boots", category: "shoes",
     price: 12367, oldPrice: 14857, rating: 4.7, icon: "👢", badge: "SALE",
     tagline: "Full-grain leather, elastic side panels",
     description: "Full-grain leather Chelsea boots with elastic side panels and a durable rubber sole — built to last.",
@@ -204,7 +204,7 @@ const PRODUCTS = [
     keywords: ["boots", "shoes", "chelsea boots", "leather boots"]
   },
   {
-    id: "f7", name: "Volt Canvas Tote", category: "bags",
+    id: "f7", stock: 65, name: "Volt Canvas Tote", category: "bags",
     price: 3735, rating: 4.3, icon: "👜",
     tagline: "Heavy-duty canvas, everyday carry",
     description: "A heavy-duty canvas tote built for everyday carry — spacious main compartment plus an interior zip pocket.",
@@ -212,7 +212,7 @@ const PRODUCTS = [
     keywords: ["tote", "bag", "tote bag", "canvas bag"]
   },
   {
-    id: "f8", name: "Volt Weekender Duffel", category: "bags",
+    id: "f8", stock: 30, name: "Volt Weekender Duffel", category: "bags",
     price: 10707, rating: 4.5, icon: "🎒", badge: "NEW",
     tagline: "Water-resistant, carry-on friendly",
     description: "A water-resistant weekender duffel sized to fit as a carry-on, with a dedicated shoe compartment.",

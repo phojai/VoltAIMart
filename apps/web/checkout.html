@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checkout — VoltAIMart</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="topbar">
+  <div class="container">
+    <div class="topbar-brands">
+      <span>Free shipping over ₹4,150</span>
+      <span>2-year warranty on every device</span>
+      <span>30-day easy returns</span>
+      <span>24/7 voice support</span>
+    </div>
+    <div>Need help? <strong style="color:var(--text-primary)">1-800-VOLT-AI</strong></div>
+  </div>
+</div>
+
+<header class="site-header">
+  <div class="container nav-row">
+    <button class="hamburger-btn" id="menuToggle" aria-label="Open menu">
+      <span></span><span></span><span></span>
+    </button>
+    <a href="index.html" class="logo"><span class="mark">⚡</span> VoltAIMart</a>
+    <div class="nav-icons">
+      <a href="wishlist.html" class="icon-btn" title="Wishlist">🤍</a>
+      <a href="cart.html" class="icon-btn" title="Cart">
+        🛒
+        <span class="badge" data-cart-badge>0</span>
+      </a>
+      <a href="login.html" class="icon-btn" title="Account" data-account-link>👤</a>
+      <button class="icon-btn call-sim-btn" id="phoneSimBtn" title="Try a call to VoltAI" type="button">📞</button>
+    </div>
+  </div>
+  <div class="container search-row">
+    <div class="nav-search nav-search-wide">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="topSearchInput" placeholder="Search products, or ask VoltAI…">
+      <button class="mic-btn" title="Search by voice">🎙️</button>
+    </div>
+  </div>
+</header>
+
+<section class="section tight">
+  <div class="container">
+    <div class="breadcrumb"><a href="index.html">Home</a> / <a href="cart.html">Cart</a> / Checkout</div>
+    <div class="section-head">
+      <div>
+        <p class="eyebrow accent">Checkout</p>
+        <h2>Complete your order</h2>
+      </div>
+    </div>
+
+    <div class="checkout-steps" id="checkoutSteps">
+      <div class="checkout-step active" data-step="1"><span class="checkout-step-num">1</span> Shipping</div>
+      <div class="checkout-step-line"></div>
+      <div class="checkout-step" data-step="2"><span class="checkout-step-num">2</span> Payment</div>
+    </div>
+
+    <div id="checkoutRoot"><!-- filled by JS --></div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-bottom">
+      <span>© 2026 VoltAIMart. All rights reserved.</span>
+      <span>Privacy · Terms</span>
+    </div>
+  </div>
+</footer>
+
+<script src="js/api.js"></script>
+<script src="js/catalog.js"></script>
+<script src="js/app.js"></script>
+<script src="js/aichat.js"></script>
+<!-- @vapi-ai/web no longer ships a plain-global browser bundle — every file under
+     its dist/ (including dist/vapi.min.js) is CommonJS ("exports"/"require"), which
+     throws "exports is not defined" if loaded via a plain <script src>. Load it as
+     an ES module instead via jsDelivr's +esm conversion, then stash the default
+     export on window.Vapi so phoneSimulator.js (a classic script) can still find it. -->
+<script type="module">
+  import Vapi from "https://cdn.jsdelivr.net/npm/@vapi-ai/web/+esm";
+  window.Vapi = Vapi;
+</script>
+<script src="js/vapiCall.js"></script>
+<script src="js/phoneSimulator.js"></script>
+<script>
+document.addEventListener("catalog:ready", async () => {
+  const user = getStoredUser();   // null → guest checkout
+
+  const cart = getCart();
+  const ids = Object.keys(cart);
+  const root = document.getElementById("checkoutRoot");
+  const stepsEl = document.getElementById("checkoutSteps");
+
+  if (!ids.length){
+    stepsEl.style.display = "none";
+    root.innerHTML = `
+      <div class="empty-state">
+        <span class="icon">🛒</span>
+        <h3 style="margin-bottom:8px;">Your cart is empty</h3>
+        <p>Add something to your cart before checking out.</p>
+        <a href="products.html" class="btn btn-primary" style="margin-top:18px; display:inline-flex;">Browse products</a>
+      </div>
+    `;
+    return;
+  }
+
+  const cartLines = ids.map(id => ({ product: getProductById(id), qty: cart[id] })).filter(l => l.product);
+  const stockProblem = cartLines.find(l => l.qty > (l.product.stock != null ? l.product.stock : Infinity));
+
+  let step = 1;
+  let address = null;
+  let payment = null;
+  let guestEmail = "";
+  let saveAddress = false;
+  let savedAddresses = [];
+  let selectedAddressId = null;   // a saved address chosen instead of the form
+
+  let prefill = {};
+  if (user){
+    try {
+      const me = await Api.me();
+      if (me.lastShippingAddress) prefill = me.lastShippingAddress;
+      savedAddresses = me.addresses || [];
+      if (savedAddresses.length) selectedAddressId = savedAddresses[0].id;
+    } catch(e){ /* best-effort prefill */ }
+  }
+
+  function summaryHTML(){
+    const subtotal = cartLines.reduce((sum, l) => sum + l.product.price * l.qty, 0);
+    const shipping = subtotal > 4150 || subtotal === 0 ? 0 : 829;
+    const tax = Math.round(subtotal * 0.08);
+    const total = subtotal + shipping + tax;
+    return `
+      <div class="summary-card">
+        <h3 style="margin-bottom:18px;">Order summary</h3>
+        ${cartLines.map(l => `
+          <div class="summary-row"><span>${l.product.icon} ${l.product.name} <span class="muted">×${l.qty}</span></span><span>₹${(l.product.price * l.qty).toLocaleString('en-IN')}</span></div>
+        `).join("")}
+        <div class="summary-row" style="border-top:1px solid var(--divider); padding-top:12px; margin-top:12px;"><span>Subtotal</span><span>₹${subtotal.toLocaleString('en-IN')}</span></div>
+        <div class="summary-row"><span>Shipping</span><span>${shipping === 0 ? "Free" : "₹" + shipping.toLocaleString('en-IN')}</span></div>
+        <div class="summary-row"><span>Estimated tax</span><span>₹${tax.toLocaleString('en-IN')}</span></div>
+        <div class="summary-row total"><span>Total</span><span>₹${total.toLocaleString('en-IN')}</span></div>
+      </div>
+    `;
+  }
+
+  function setStep(n){
+    step = n;
+    stepsEl.querySelectorAll(".checkout-step").forEach(el => {
+      const s = Number(el.dataset.step);
+      el.classList.toggle("active", s === n);
+      el.classList.toggle("done", s < n);
+    });
+    render();
+  }
+
+  function renderShippingStep(){
+    const savedHTML = savedAddresses.length ? `
+      <div id="savedAddresses" style="margin-bottom:16px;">
+        ${savedAddresses.map(a => `
+          <div class="address-card ${selectedAddressId === a.id ? "selected" : ""}" data-addr="${a.id}">
+            <div class="address-name">${a.name} · ${a.phone}</div>
+            <div class="address-lines">${a.line1}${a.line2 ? ", " + a.line2 : ""}, ${a.city}, ${a.state} ${a.pincode}</div>
+          </div>
+        `).join("")}
+        <div class="address-card ${selectedAddressId === null ? "selected" : ""}" data-addr="">
+          <div class="address-name">➕ Use a new address</div>
+        </div>
+      </div>
+    ` : "";
+
+    root.innerHTML = `
+      <div class="cart-layout">
+        <div class="card">
+          ${stockProblem ? `<div class="checkout-note" style="border-color:var(--danger); color:var(--danger); margin-bottom:18px; margin-top:0;">⚠️ Only ${stockProblem.product.stock} left of "${stockProblem.product.name}" — <a href="cart.html" style="color:var(--danger); text-decoration:underline;">adjust your cart</a> before continuing.</div>` : ""}
+          ${!user ? `
+            <div class="checkout-note" style="margin:0 0 18px;">👤 Checking out as a guest — <a href="login.html?redirect=checkout.html" style="color:var(--accent);">log in</a> to use saved addresses and see order history.</div>
+            <label class="auth-label">Contact email (for order updates)</label>
+            <input type="email" id="fEmail" class="auth-input" value="${guestEmail}" placeholder="you@example.com">
+          ` : ""}
+          <h3 style="margin:${!user ? "18px" : "0"} 0 16px;">Shipping address</h3>
+          ${savedHTML}
+          <form id="shippingForm">
+            <div id="newAddressFields" style="${selectedAddressId ? "display:none;" : ""}">
+              <div class="form-grid">
+                <div>
+                  <label class="auth-label">Full name</label>
+                  <input type="text" id="fName" class="auth-input" value="${prefill.name || (user ? user.name : "")}">
+                </div>
+                <div>
+                  <label class="auth-label">Phone</label>
+                  <input type="tel" id="fPhone" class="auth-input" value="${prefill.phone || ""}" placeholder="10-digit mobile number">
+                </div>
+              </div>
+              <label class="auth-label">Address line 1</label>
+              <input type="text" id="fLine1" class="auth-input" value="${prefill.line1 || ""}" placeholder="House no., street">
+              <label class="auth-label">Address line 2 (optional)</label>
+              <input type="text" id="fLine2" class="auth-input" value="${prefill.line2 || ""}" placeholder="Landmark, apartment, etc.">
+              <div class="form-grid">
+                <div>
+                  <label class="auth-label">City</label>
+                  <input type="text" id="fCity" class="auth-input" value="${prefill.city || ""}">
+                </div>
+                <div>
+                  <label class="auth-label">State</label>
+                  <input type="text" id="fState" class="auth-input" value="${prefill.state || ""}">
+                </div>
+              </div>
+              <label class="auth-label">Pincode</label>
+              <input type="text" id="fPincode" class="auth-input" value="${prefill.pincode || ""}" placeholder="6-digit pincode">
+              ${user ? `
+                <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-secondary); margin-top:14px; cursor:pointer;">
+                  <input type="checkbox" id="fSaveAddress" style="accent-color:var(--accent);"> Save this address to my address book
+                </label>
+              ` : ""}
+            </div>
+            <div class="auth-error" id="shippingError"></div>
+            <button type="submit" class="btn btn-primary btn-block" style="margin-top:18px;" ${stockProblem ? "disabled" : ""}>Continue to payment</button>
+          </form>
+        </div>
+        ${summaryHTML()}
+      </div>
+    `;
+
+    document.querySelectorAll("[data-addr]").forEach(cardEl => cardEl.addEventListener("click", () => {
+      selectedAddressId = cardEl.dataset.addr || null;
+      document.querySelectorAll("[data-addr]").forEach(el =>
+        el.classList.toggle("selected", (el.dataset.addr || null) === selectedAddressId));
+      document.getElementById("newAddressFields").style.display = selectedAddressId ? "none" : "";
+    }));
+
+    document.getElementById("shippingForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const errorEl = document.getElementById("shippingError");
+      errorEl.textContent = "";
+
+      if (!user){
+        guestEmail = document.getElementById("fEmail").value.trim();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail)){
+          errorEl.textContent = "Enter a valid contact email for order updates.";
+          return;
+        }
+      }
+
+      if (selectedAddressId){
+        const a = savedAddresses.find(x => x.id === selectedAddressId);
+        address = { name: a.name, phone: a.phone, line1: a.line1, line2: a.line2 || "", city: a.city, state: a.state, pincode: a.pincode };
+        saveAddress = false;
+        setStep(2);
+        return;
+      }
+
+      const phone = document.getElementById("fPhone").value.trim();
+      const pincode = document.getElementById("fPincode").value.trim();
+      const name = document.getElementById("fName").value.trim();
+      const line1 = document.getElementById("fLine1").value.trim();
+      const city = document.getElementById("fCity").value.trim();
+      const state = document.getElementById("fState").value.trim();
+      if (!name || !line1 || !city || !state){
+        errorEl.textContent = "Please fill in all required address fields.";
+        return;
+      }
+      if (!/^[0-9]{10}$/.test(phone)){
+        errorEl.textContent = "Enter a valid 10-digit phone number.";
+        return;
+      }
+      if (!/^[0-9]{6}$/.test(pincode)){
+        errorEl.textContent = "Enter a valid 6-digit pincode.";
+        return;
+      }
+      address = {
+        name,
+        phone,
+        line1,
+        line2: document.getElementById("fLine2").value.trim(),
+        city,
+        state,
+        pincode,
+      };
+      saveAddress = user ? document.getElementById("fSaveAddress").checked : false;
+      setStep(2);
+    });
+  }
+
+  function renderPaymentStep(){
+    root.innerHTML = `
+      <div class="cart-layout">
+        <div class="card">
+          <h3 style="margin-bottom:16px;">Payment</h3>
+          <div class="provider-grid" id="paymentMethodGrid" style="grid-template-columns:repeat(2,1fr);">
+            <div class="provider-card" data-method="upi">
+              <div class="provider-card-icon">📲</div>
+              <div class="provider-card-name">UPI</div>
+              <div class="muted" style="font-size:12.5px;">Pay via any UPI app</div>
+            </div>
+            <div class="provider-card" data-method="card">
+              <div class="provider-card-icon">💳</div>
+              <div class="provider-card-name">Card</div>
+              <div class="muted" style="font-size:12.5px;">Credit or debit card</div>
+            </div>
+          </div>
+
+          <div id="paymentFields"></div>
+
+          <div class="checkout-note">🔒 Simulated payment — no real gateway is integrated, so no card/UPI details are ever charged or stored. This order will be marked "paid" automatically.</div>
+
+          <div class="auth-error" id="paymentError"></div>
+          <div style="display:flex; gap:12px; margin-top:18px;">
+            <button type="button" class="btn btn-ghost" id="backToShipping">Back</button>
+            <button type="button" class="btn btn-primary" id="placeOrderBtn" style="flex:1;">Place order</button>
+          </div>
+        </div>
+        ${summaryHTML()}
+      </div>
+    `;
+
+    let method = "upi";
+    const grid = document.getElementById("paymentMethodGrid");
+    function paintMethod(){
+      grid.querySelectorAll(".provider-card").forEach(el => el.classList.toggle("selected", el.dataset.method === method));
+      document.getElementById("paymentFields").innerHTML = method === "upi" ? `
+        <label class="auth-label">UPI ID</label>
+        <input type="text" id="fVpa" class="auth-input" placeholder="yourname@upi">
+      ` : `
+        <div class="form-grid">
+          <div>
+            <label class="auth-label">Card number</label>
+            <input type="text" id="fCardNumber" class="auth-input" placeholder="1234 5678 9012 3456" maxlength="19">
+          </div>
+          <div>
+            <label class="auth-label">Name on card</label>
+            <input type="text" id="fCardName" class="auth-input" placeholder="As printed on card">
+          </div>
+        </div>
+        <div class="form-grid">
+          <div>
+            <label class="auth-label">Expiry</label>
+            <input type="text" id="fExpiry" class="auth-input" placeholder="MM/YY" maxlength="5">
+          </div>
+          <div>
+            <label class="auth-label">CVV</label>
+            <input type="password" id="fCvv" class="auth-input" placeholder="•••" maxlength="4">
+          </div>
+        </div>
+      `;
+    }
+    grid.querySelectorAll(".provider-card").forEach(el => el.addEventListener("click", () => { method = el.dataset.method; paintMethod(); }));
+    paintMethod();
+
+    document.getElementById("backToShipping").addEventListener("click", () => setStep(1));
+
+    document.getElementById("placeOrderBtn").addEventListener("click", async () => {
+      const errorEl = document.getElementById("paymentError");
+      errorEl.textContent = "";
+
+      if (method === "upi"){
+        const vpa = document.getElementById("fVpa").value.trim();
+        if (!/^[\w.-]+@[\w.-]+$/.test(vpa)){
+          errorEl.textContent = "Enter a valid UPI ID (e.g. name@bank).";
+          return;
+        }
+        payment = { method: "upi", vpa };
+      } else {
+        const cardNumber = document.getElementById("fCardNumber").value.replace(/\s+/g, "");
+        const cardName = document.getElementById("fCardName").value.trim();
+        const expiry = document.getElementById("fExpiry").value.trim();
+        const cvv = document.getElementById("fCvv").value.trim();
+        if (!/^\d{13,19}$/.test(cardNumber) || !cardName || !/^\d{2}\/\d{2}$/.test(expiry) || !/^\d{3,4}$/.test(cvv)){
+          errorEl.textContent = "Enter valid card details.";
+          return;
+        }
+        // Only the last 4 digits ever leave the browser — see the note above.
+        payment = { method: "card", last4: cardNumber.slice(-4), cardName, expiry };
+      }
+
+      const btn = document.getElementById("placeOrderBtn");
+      btn.disabled = true;
+      btn.textContent = "Placing order…";
+      try {
+        const items = cartLines.map(l => ({ productId: l.product.id, qty: l.qty }));
+        const extras = user ? { saveAddress } : { email: guestEmail };
+        const order = await Api.createOrder(items, address, payment, extras);
+        saveCart({});
+        renderConfirmation(order);
+      } catch(err){
+        errorEl.textContent = err.message || "Couldn't place order.";
+        btn.disabled = false;
+        btn.textContent = "Place order";
+      }
+    });
+  }
+
+  function renderConfirmation(order){
+    stepsEl.style.display = "none";
+    root.innerHTML = `
+      <div class="empty-state" style="text-align:left; padding:0;">
+        <div class="card" style="max-width:560px;">
+          <div style="text-align:center; margin-bottom:18px;">
+            <span class="icon" style="margin-bottom:10px;">✅</span>
+            <h3>Order placed!</h3>
+            <p class="muted mono" style="font-size:13px; margin-top:6px;">${order.id}</p>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;">
+            ${order.items.map(i => `
+              <div style="display:flex; justify-content:space-between; font-size:14px;">
+                <span>${i.icon || ""} ${i.name} <span class="muted">×${i.qty}</span></span>
+                <span>₹${i.lineTotal.toLocaleString('en-IN')}</span>
+              </div>
+            `).join("")}
+          </div>
+          <div class="summary-row total" style="border-top:1px solid var(--divider); padding-top:12px; margin:0 0 18px;">
+            <span>Total</span><span>₹${order.total.toLocaleString('en-IN')}</span>
+          </div>
+          <p class="muted" style="font-size:13px; margin-bottom:12px;">Shipping to ${order.shippingAddress.name}, ${order.shippingAddress.line1}, ${order.shippingAddress.city} ${order.shippingAddress.pincode}</p>
+          <p class="muted" style="font-size:12.5px; margin-bottom:18px;">📧 A confirmation email was sent to ${order.userEmail} <span style="opacity:.7;">(simulated — no real email is sent)</span></p>
+          <div style="display:flex; gap:12px;">
+            ${user
+              ? `<a href="account.html" class="btn btn-primary" style="flex:1; text-align:center;">View my orders</a>`
+              : `<a href="track.html?id=${order.id}&email=${encodeURIComponent(order.userEmail)}" class="btn btn-primary" style="flex:1; text-align:center;">Track this order</a>`}
+            <a href="products.html" class="btn btn-ghost" style="flex:1; text-align:center;">Continue shopping</a>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function render(){
+    if (step === 1) renderShippingStep();
+    else renderPaymentStep();
+  }
+
+  render();
+});
+</script>
+</body>
+</html>

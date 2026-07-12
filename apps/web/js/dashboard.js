@@ -53,9 +53,9 @@ async function loadOrders(){
   document.getElementById("ordersBody").innerHTML = filtered.map(o => `
     <tr>
       <td><span class="mono">${o.id}</span></td>
-      <td>${o.userName || o.userEmail}<div class="muted" style="font-size:12px;">${o.userEmail}</div></td>
+      <td>${o.userName || o.userEmail}${o.guest ? ` <span class="tag-inline">GUEST</span>` : ""}<div class="muted" style="font-size:12px;">${o.userEmail}</div>${o.shippingAddress ? `<div class="muted" style="font-size:12px;">📦 ${o.shippingAddress.city} ${o.shippingAddress.pincode}</div>` : ""}</td>
       <td>${o.items.map(i => `${i.icon || ""} ${i.name} ×${i.qty}`).join("<br>")}</td>
-      <td>${fmtMoney(o.total)}</td>
+      <td>${fmtMoney(o.total)}${o.payment ? `<div class="muted" style="font-size:12px;">${o.payment.method === "upi" ? "UPI" : `Card ••${o.payment.last4 || ""}`}</div>` : ""}</td>
       <td>
         <select class="status-select status-${o.status}" data-order-id="${o.id}">
           ${["processing","shipped","delivered","cancelled"].map(s => `<option value="${s}" ${o.status===s?"selected":""}>${s}</option>`).join("")}
@@ -93,12 +93,13 @@ async function loadProducts(){
       <td class="muted">${categoryLabelSafe(p.category)}</td>
       <td>${fmtMoney(p.price)}${p.oldPrice ? `<div class="muted" style="font-size:12px; text-decoration:line-through;">${fmtMoney(p.oldPrice)}</div>` : ""}</td>
       <td>★ ${p.rating}</td>
+      <td style="${p.stock === 0 ? "color:var(--danger); font-weight:700;" : p.stock <= 5 ? "color:var(--accent-light); font-weight:700;" : ""}">${p.stock}${p.stock === 0 ? " · out" : p.stock <= 5 ? " · low" : ""}</td>
       <td>
         <button class="icon-action" data-edit="${p.id}" title="Edit">✏️</button>
         <button class="icon-action" data-delete="${p.id}" title="Delete">🗑️</button>
       </td>
     </tr>
-  `).join("") || `<tr><td colspan="7" class="muted" style="text-align:center; padding:30px;">No products yet.</td></tr>`;
+  `).join("") || `<tr><td colspan="8" class="muted" style="text-align:center; padding:30px;">No products yet.</td></tr>`;
 
   document.querySelectorAll("[data-edit]").forEach(btn => btn.addEventListener("click", () => openEditProduct(btn.dataset.edit)));
   document.querySelectorAll("[data-delete]").forEach(btn => btn.addEventListener("click", () => deleteProduct(btn.dataset.delete)));
@@ -178,6 +179,7 @@ function openAddProduct(){
   document.getElementById("productForm").reset();
   document.getElementById("pfIcon").value = "📦";
   document.getElementById("pfRating").value = "4.5";
+  document.getElementById("pfStock").value = "25";
   document.getElementById("productFormError").textContent = "";
   document.getElementById("productModalOverlay").classList.add("open");
 }
@@ -194,6 +196,7 @@ async function openEditProduct(id){
   document.getElementById("pfOldPrice").value = product.oldPrice || "";
   document.getElementById("pfRating").value = product.rating;
   document.getElementById("pfIcon").value = product.icon;
+  document.getElementById("pfStock").value = product.stock != null ? product.stock : 25;
   document.getElementById("pfBadge").value = product.badge || "";
   document.getElementById("pfTagline").value = product.tagline || "";
   document.getElementById("pfDescription").value = product.description || "";
@@ -232,6 +235,9 @@ async function loadUsers(){
         </select>
       </td>
       <td class="muted" style="font-size:12.5px;">${fmtDate(u.createdAt)}</td>
+      <td>
+        ${u.id === currentUser.id ? "" : `<button class="icon-action" data-delete-user="${u.id}" data-user-name="${u.name}" title="Delete user">🗑️</button>`}
+      </td>
     </tr>
   `).join("");
 
@@ -243,6 +249,20 @@ async function loadUsers(){
       } catch(err){
         showToast(err.message || "Couldn't update role.");
         loadUsers();
+      }
+    });
+  });
+
+  document.querySelectorAll("[data-delete-user]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      if (!confirm(`Delete user "${btn.dataset.userName}"? Their orders are kept for record-keeping.`)) return;
+      try {
+        await Api.deleteUser(btn.dataset.deleteUser);
+        showToast("User deleted.");
+        loadUsers();
+        refreshOverviewStats();
+      } catch(err){
+        showToast(err.message || "Couldn't delete that user.");
       }
     });
   });
@@ -663,6 +683,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       oldPrice: document.getElementById("pfOldPrice").value ? parseFloat(document.getElementById("pfOldPrice").value) : undefined,
       rating: parseFloat(document.getElementById("pfRating").value) || 4.5,
       icon: document.getElementById("pfIcon").value.trim() || "📦",
+      stock: parseInt(document.getElementById("pfStock").value, 10) || 0,
       badge: document.getElementById("pfBadge").value || undefined,
       tagline: document.getElementById("pfTagline").value.trim(),
       description: document.getElementById("pfDescription").value.trim(),

@@ -27,6 +27,7 @@
     </button>
     <a href="index.html" class="logo"><span class="mark">⚡</span> VoltAIMart</a>
     <div class="nav-icons">
+      <a href="wishlist.html" class="icon-btn" title="Wishlist">🤍</a>
       <a href="cart.html" class="icon-btn" title="Cart">
         🛒
         <span class="badge" data-cart-badge>0</span>
@@ -159,25 +160,9 @@ document.addEventListener("catalog:ready", () => {
     }));
     const checkoutBtn = document.getElementById("checkoutBtn");
     if (checkoutBtn){
-      checkoutBtn.addEventListener("click", async () => {
-        if (!isLoggedIn()){
-          showToast("Please log in to check out.");
-          setTimeout(() => { window.location.href = "login.html?redirect=cart.html"; }, 900);
-          return;
-        }
-        checkoutBtn.disabled = true;
-        checkoutBtn.textContent = "Placing order…";
-        try {
-          const items = Object.entries(getCart()).map(([productId, qty]) => ({ productId, qty }));
-          const order = await Api.createOrder(items);
-          saveCart({});
-          showToast(`Order ${order.id} placed!`);
-          setTimeout(() => { window.location.href = "account.html"; }, 1000);
-        } catch(err){
-          showToast(err.message || "Couldn't place order.");
-          checkoutBtn.disabled = false;
-          checkoutBtn.textContent = "Checkout";
-        }
+      // Guests are welcome — checkout.html handles guest contact details itself.
+      checkoutBtn.addEventListener("click", () => {
+        window.location.href = "checkout.html";
       });
     }
   }

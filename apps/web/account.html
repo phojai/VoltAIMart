@@ -26,17 +26,80 @@
     </div>
 
     <div class="account-layout">
-      <div class="card" id="profileCard">
-        <span class="icon">👤</span>
-        <h3 id="profileName"></h3>
-        <p id="profileEmail" class="muted" style="margin-bottom:14px;"></p>
-        <span class="dash-role-pill customer">Customer</span>
-        <div style="margin-top:20px;">
-          <button class="btn btn-ghost btn-block" id="logoutBtn">Log out</button>
+      <div>
+        <div class="card" id="profileCard">
+          <span class="icon">👤</span>
+          <h3 id="profileName"></h3>
+          <p id="profileEmail" class="muted" style="margin-bottom:14px;"></p>
+          <span class="dash-role-pill customer">Customer</span>
+          <div style="margin-top:20px;">
+            <button class="btn btn-ghost btn-block" id="logoutBtn">Log out</button>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:18px;">
+          <h3 style="font-size:16px; margin-bottom:14px;">Edit profile</h3>
+          <form id="profileForm" class="auth-form">
+            <label class="auth-label">Full name</label>
+            <input type="text" id="pfFullName" class="auth-input">
+            <label class="auth-label">Current password <span class="muted" style="font-weight:400;">(only to change password)</span></label>
+            <input type="password" id="pfCurrentPassword" class="auth-input" autocomplete="current-password">
+            <label class="auth-label">New password</label>
+            <input type="password" id="pfNewPassword" class="auth-input" placeholder="At least 6 characters" autocomplete="new-password">
+            <div class="auth-error" id="profileError"></div>
+            <button type="submit" class="btn btn-primary btn-block" style="margin-top:14px;" id="profileSubmit">Save changes</button>
+          </form>
+        </div>
+
+        <div class="card" style="margin-top:18px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+            <h3 style="font-size:16px;">Address book</h3>
+            <button class="link-btn" id="addAddressBtn" style="color:var(--accent);">+ Add</button>
+          </div>
+          <div id="addressList"></div>
+          <form id="addressForm" class="auth-form" style="display:none; margin-top:8px;">
+            <div class="form-grid">
+              <div>
+                <label class="auth-label">Full name</label>
+                <input type="text" id="afName" class="auth-input">
+              </div>
+              <div>
+                <label class="auth-label">Phone</label>
+                <input type="tel" id="afPhone" class="auth-input" placeholder="10-digit number">
+              </div>
+            </div>
+            <label class="auth-label">Address line 1</label>
+            <input type="text" id="afLine1" class="auth-input">
+            <label class="auth-label">Address line 2 (optional)</label>
+            <input type="text" id="afLine2" class="auth-input">
+            <div class="form-grid">
+              <div>
+                <label class="auth-label">City</label>
+                <input type="text" id="afCity" class="auth-input">
+              </div>
+              <div>
+                <label class="auth-label">State</label>
+                <input type="text" id="afState" class="auth-input">
+              </div>
+            </div>
+            <label class="auth-label">Pincode</label>
+            <input type="text" id="afPincode" class="auth-input" placeholder="6-digit pincode">
+            <div class="auth-error" id="addressError"></div>
+            <div style="display:flex; gap:10px; margin-top:14px;">
+              <button type="submit" class="btn btn-primary" style="flex:1;" id="addressSubmit">Save address</button>
+              <button type="button" class="btn btn-ghost" id="addressCancel">Cancel</button>
+            </div>
+          </form>
         </div>
       </div>
 
       <div>
+        <div class="section-head" style="margin-bottom:16px;">
+          <div><h3 style="font-size:18px;">Notifications <span class="muted" style="font-size:12px; font-weight:400;">(simulated email inbox)</span></h3></div>
+          <span class="muted" id="notifCount"></span>
+        </div>
+        <div id="notifList" style="margin-bottom:28px;"></div>
+
         <div class="section-head" style="margin-bottom:16px;">
           <div><h3 style="font-size:18px;">Order history</h3></div>
           <span class="muted" id="orderCount">0 orders</span>

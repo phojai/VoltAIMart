@@ -27,6 +27,7 @@
     </button>
     <a href="index.html" class="logo"><span class="mark">⚡</span> VoltAIMart</a>
     <div class="nav-icons">
+      <a href="wishlist.html" class="icon-btn" title="Wishlist">🤍</a>
       <a href="cart.html" class="icon-btn" title="Cart">
         🛒
         <span class="badge" data-cart-badge>0</span>
@@ -51,6 +52,18 @@
     </div>
 
     <div class="detail-grid" id="detailRoot"><!-- filled by JS --></div>
+  </div>
+</section>
+
+<section class="section tight">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow accent">Customer feedback</p>
+        <h2>Reviews</h2>
+      </div>
+    </div>
+    <div id="reviewsRoot"><!-- filled by JS --></div>
   </div>
 </section>
 
@@ -85,7 +98,7 @@
       <div>
         <h4>Support</h4>
         <ul>
-          <li><a href="#">Track order</a></li>
+          <li><a href="track.html">Track order</a></li>
           <li><a href="#">Returns &amp; warranty</a></li>
           <li><a href="#">Contact us</a></li>
           <li><a href="#">Ask VoltAI</a></li>
@@ -143,12 +156,19 @@ document.addEventListener("catalog:ready", () => {
   document.getElementById("crumbCat").href = `products.html?category=${product.category}`;
   document.getElementById("crumbName").textContent = product.name;
 
+  const stock = product.stock != null ? product.stock : 25;
+  const stockLine = stock === 0
+    ? `<span style="font-size:13.5px; color:var(--danger); font-weight:700;">Out of stock</span>`
+    : stock <= 10
+      ? `<span style="font-size:13.5px; color:var(--accent-light); font-weight:700;">Only ${stock} left</span>`
+      : `<span class="muted" style="font-size:13.5px;">In stock — ships in 1-2 days</span>`;
+
   document.getElementById("detailRoot").innerHTML = `
     <div class="detail-gallery">${product.icon}</div>
     <div class="detail-info">
       <span class="product-cat">${categoryLabel(product.category)}</span>
       <h1>${product.name}</h1>
-      <span class="stars">${starString(product.rating)} <span class="muted">(${product.rating} rating)</span></span>
+      <span class="stars" id="detailStars">${starString(product.rating)} <span class="muted">(${product.rating} rating${product.reviewCount ? ` · ${product.reviewCount} review${product.reviewCount === 1 ? "" : "s"}` : ""})</span></span>
       <div class="detail-price">
         ₹${product.price.toLocaleString('en-IN')}
         ${product.oldPrice ? `<span class="price-old" style="font-size:18px; margin-left:10px;">₹${product.oldPrice.toLocaleString('en-IN')}</span>` : ""}
@@ -161,11 +181,12 @@ document.addEventListener("catalog:ready", () => {
           <input type="text" id="qtyInput" value="1" readonly>
           <button id="qtyPlus">+</button>
         </div>
-        <span class="muted" style="font-size:13.5px;">In stock — ships in 1-2 days</span>
+        ${stockLine}
       </div>
 
       <div class="detail-actions">
-        <button class="btn btn-primary" id="addToCartBtn" style="flex:1;">Add to cart</button>
+        <button class="btn btn-primary" id="addToCartBtn" style="flex:1;" ${stock === 0 ? "disabled" : ""}>${stock === 0 ? "Out of stock" : "Add to cart"}</button>
+        <button class="wishlist-btn ${WISHLIST_IDS.has(product.id) ? 'active' : ''}" data-wishlist="${product.id}" type="button" onclick="toggleWishlist('${product.id}')" title="Save to wishlist" style="position:static;">${WISHLIST_IDS.has(product.id) ? "♥" : "♡"}</button>
         <button class="btn btn-ghost" id="askVoiceBtn">🎙️ Ask VoltAI about this</button>
       </div>
 
@@ -181,7 +202,7 @@ document.addEventListener("catalog:ready", () => {
     document.getElementById("qtyInput").value = qty;
   });
   document.getElementById("qtyPlus").addEventListener("click", () => {
-    qty = qty + 1;
+    qty = stock > 0 ? Math.min(stock, qty + 1) : qty;
     document.getElementById("qtyInput").value = qty;
   });
   document.getElementById("addToCartBtn").addEventListener("click", () => addToCart(product.id, qty));
@@ -191,6 +212,83 @@ document.addEventListener("catalog:ready", () => {
 
   const related = getProductsByCategory(product.category).filter(p => p.id !== product.id).slice(0, 4);
   renderGrid("#relatedGrid", related.length ? related : PRODUCTS.filter(p => p.id !== product.id).slice(0,4));
+
+  async function renderReviews(){
+    const root = document.getElementById("reviewsRoot");
+    let reviews = [];
+    try { reviews = await Api.getReviews(product.id); } catch(e){ reviews = []; }
+
+    const listHTML = reviews.length ? reviews.map(r => `
+      <div style="padding:16px 0; border-bottom:1px solid var(--divider);">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:4px;">
+          <strong style="font-size:14px;">${r.userName}</strong>
+          <span class="stars" style="font-size:13px;">${starString(r.rating)}</span>
+          <span class="muted" style="font-size:12px;">${new Date(r.createdAt).toLocaleDateString('en-IN')}</span>
+        </div>
+        ${r.comment ? `<p class="muted" style="font-size:13.5px; margin:0;">${r.comment}</p>` : ""}
+      </div>
+    `).join("") : `<p class="muted">No reviews yet — be the first to review this product.</p>`;
+
+    const user = getStoredUser();
+    const formHTML = user ? `
+      <div class="card" style="margin-top:22px;">
+        <h3 style="margin-bottom:14px;">Write a review</h3>
+        <div class="star-picker" id="reviewStarPicker">
+          ${[1,2,3,4,5].map(n => `<span data-star="${n}">★</span>`).join("")}
+        </div>
+        <textarea class="auth-input" id="reviewComment" rows="3" placeholder="Share your thoughts about this product (optional)" style="margin-top:14px; resize:vertical; font-family:inherit; width:100%;"></textarea>
+        <button class="btn btn-primary" id="submitReviewBtn" style="margin-top:14px;">Submit review</button>
+      </div>
+    ` : `
+      <p class="muted" style="margin-top:18px;">
+        <a href="login.html?redirect=${encodeURIComponent(location.pathname + location.search)}" style="color:var(--accent);">Log in</a> to write a review.
+      </p>
+    `;
+
+    root.innerHTML = `${listHTML}${formHTML}`;
+
+    if (user){
+      let selectedRating = 0;
+      const picker = document.getElementById("reviewStarPicker");
+      const stars = picker.querySelectorAll("span");
+      function paintStars(n){
+        stars.forEach(s => s.classList.toggle("filled", Number(s.dataset.star) <= n));
+      }
+      stars.forEach(s => {
+        s.addEventListener("mouseenter", () => paintStars(Number(s.dataset.star)));
+        s.addEventListener("click", () => { selectedRating = Number(s.dataset.star); paintStars(selectedRating); });
+      });
+      picker.addEventListener("mouseleave", () => paintStars(selectedRating));
+
+      document.getElementById("submitReviewBtn").addEventListener("click", async () => {
+        if (!selectedRating){
+          showToast("Please select a star rating.");
+          return;
+        }
+        const btn = document.getElementById("submitReviewBtn");
+        btn.disabled = true;
+        btn.textContent = "Submitting…";
+        try {
+          const { product: updated } = await Api.submitReview(product.id, {
+            rating: selectedRating,
+            comment: document.getElementById("reviewComment").value,
+          });
+          product.rating = updated.rating;
+          product.reviewCount = updated.reviewCount;
+          document.getElementById("detailStars").innerHTML =
+            `${starString(product.rating)} <span class="muted">(${product.rating} rating · ${product.reviewCount} review${product.reviewCount === 1 ? "" : "s"})</span>`;
+          showToast("Thanks for your review!");
+          renderReviews();
+        } catch(err){
+          showToast(err.message || "Couldn't submit review.");
+          btn.disabled = false;
+          btn.textContent = "Submit review";
+        }
+      });
+    }
+  }
+
+  renderReviews();
 });
 </script>
 </body>

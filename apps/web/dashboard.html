@@ -74,7 +74,7 @@
       <div class="table-wrap">
         <table class="data-table" id="productsTable">
           <thead>
-            <tr><th></th><th>Product ID</th><th>Name</th><th>Category</th><th>Price</th><th>Rating</th><th></th></tr>
+            <tr><th></th><th>Product ID</th><th>Name</th><th>Category</th><th>Price</th><th>Rating</th><th>Stock</th><th></th></tr>
           </thead>
           <tbody id="productsBody"></tbody>
         </table>
@@ -89,7 +89,7 @@
       <div class="table-wrap">
         <table class="data-table" id="usersTable">
           <thead>
-            <tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th></tr>
+            <tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th><th></th></tr>
           </thead>
           <tbody id="usersBody"></tbody>
         </table>
@@ -446,6 +446,10 @@
         <div>
           <label class="auth-label">Icon (emoji)</label>
           <input type="text" id="pfIcon" class="auth-input" value="📦" maxlength="4">
+        </div>
+        <div>
+          <label class="auth-label">Stock</label>
+          <input type="number" id="pfStock" class="auth-input" min="0" step="1" value="25">
         </div>
         <div>
           <label class="auth-label">Badge (optional)</label>

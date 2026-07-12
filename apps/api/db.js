@@ -76,6 +76,8 @@ function seedInitialData(){
   const products = PRODUCTS.map(p => ({
     ...p,
     department: catDept[p.category] || "electronics",
+    stock: p.stock != null ? p.stock : 25,
+    reviewCount: 0,
     createdAt: now,
     updatedAt: now,
   }));
@@ -84,6 +86,9 @@ function seedInitialData(){
     users,
     products,
     orders: [],
+    reviews: [],
+    wishlists: {},
+    notifications: [],
     departments: DEPARTMENTS,
     categories: CATEGORIES,
     settings: defaultSettings(),
@@ -111,6 +116,27 @@ async function readDB(){
     data.settings.vapi.agentMode = data.settings.vapi.publicKey ? "vapi" : "simulated";
     await writeDB(data);
   }
+
+  // Migration: reviews, wishlists, and per-product stock/reviewCount didn't
+  // exist before this update — backfill so older db.json files keep working.
+  let dirty = false;
+  if (!data.reviews){ data.reviews = []; dirty = true; }
+  if (!data.wishlists){ data.wishlists = {}; dirty = true; }
+  if (data.products.some(p => p.stock == null || p.reviewCount == null)){
+    data.products.forEach(p => {
+      if (p.stock == null) p.stock = 25;       // sensible non-zero default for pre-existing demo data
+      if (p.reviewCount == null) p.reviewCount = 0;
+    });
+    dirty = true;
+  }
+  // Migration: notifications (simulated emails) and per-user address books.
+  if (!data.notifications){ data.notifications = []; dirty = true; }
+  if (data.users.some(u => !Array.isArray(u.addresses))){
+    data.users.forEach(u => { if (!Array.isArray(u.addresses)) u.addresses = []; });
+    dirty = true;
+  }
+  if (dirty) await writeDB(data);
+
   return data;
 }
 

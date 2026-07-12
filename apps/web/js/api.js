@@ -62,6 +62,11 @@ const Api = {
     const data = await apiFetch("/api/auth/me");
     return data.user;
   },
+  async updateProfile(patch){
+    const data = await apiFetch("/api/auth/me", { method: "PATCH", body: patch });
+    setSession(data.token, data.user);
+    return data.user;
+  },
   logout(){
     clearSession();
   },
@@ -96,13 +101,67 @@ const Api = {
     const data = await apiFetch("/api/orders");
     return data.orders;
   },
-  async createOrder(items){
-    const data = await apiFetch("/api/orders", { method: "POST", body: { items } });
+  async createOrder(items, shippingAddress, payment, extras = {}){
+    const data = await apiFetch("/api/orders", { method: "POST", body: { items, shippingAddress, payment, ...extras } });
     return data.order;
   },
   async updateOrderStatus(id, status){
     const data = await apiFetch(`/api/orders/${id}`, { method: "PATCH", body: { status } });
     return data.order;
+  },
+  async cancelOrder(id){
+    const data = await apiFetch(`/api/orders/${id}/cancel`, { method: "POST" });
+    return data.order;
+  },
+  async trackOrder(id, email){
+    const qs = new URLSearchParams({ id, email });
+    const data = await apiFetch(`/api/orders/track?${qs}`);
+    return data.order;
+  },
+
+  async getAddresses(){
+    const data = await apiFetch("/api/addresses");
+    return data.addresses;
+  },
+  async addAddress(address){
+    const data = await apiFetch("/api/addresses", { method: "POST", body: address });
+    return data.addresses;
+  },
+  async updateAddress(id, address){
+    const data = await apiFetch(`/api/addresses/${id}`, { method: "PUT", body: address });
+    return data.addresses;
+  },
+  async deleteAddress(id){
+    const data = await apiFetch(`/api/addresses/${id}`, { method: "DELETE" });
+    return data.addresses;
+  },
+
+  async getNotifications(){
+    return apiFetch("/api/notifications");
+  },
+  async markNotificationsRead(){
+    return apiFetch("/api/notifications/mark-read", { method: "POST" });
+  },
+
+  async getReviews(productId){
+    const data = await apiFetch(`/api/products/${productId}/reviews`);
+    return data.reviews;
+  },
+  async submitReview(productId, { rating, comment }){
+    return apiFetch(`/api/products/${productId}/reviews`, { method: "POST", body: { rating, comment } });
+  },
+
+  async getWishlist(){
+    const data = await apiFetch("/api/wishlist");
+    return data.productIds;
+  },
+  async addToWishlist(productId){
+    const data = await apiFetch(`/api/wishlist/${productId}`, { method: "POST" });
+    return data.productIds;
+  },
+  async removeFromWishlist(productId){
+    const data = await apiFetch(`/api/wishlist/${productId}`, { method: "DELETE" });
+    return data.productIds;
   },
 
   async getUsers(){
@@ -111,6 +170,10 @@ const Api = {
   },
   async updateUserRole(id, role){
     const data = await apiFetch(`/api/users/${id}`, { method: "PATCH", body: { role } });
+    return data.user;
+  },
+  async deleteUser(id){
+    const data = await apiFetch(`/api/users/${id}`, { method: "DELETE" });
     return data.user;
   },
 

@@ -7,7 +7,15 @@ const { signToken, requireAuth } = require("../middleware/auth");
 const router = express.Router();
 
 function publicUser(u){
-  return { id: u.id, name: u.name, email: u.email, role: u.role, createdAt: u.createdAt };
+  return {
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    role: u.role,
+    createdAt: u.createdAt,
+    lastShippingAddress: u.lastShippingAddress || null,
+    addresses: Array.isArray(u.addresses) ? u.addresses : [],
+  };
 }
 
 // POST /api/auth/login  { email, password }
@@ -59,6 +67,37 @@ router.get("/me", requireAuth, async (req, res) => {
   const user = db.users.find(u => u.id === req.user.id);
   if (!user) return res.status(404).json({ error: "User not found." });
   res.json({ user: publicUser(user) });
+});
+
+// PATCH /api/auth/me — update own profile: { name?, currentPassword?, newPassword? }.
+// Changing the password requires the current one. Returns a fresh token since
+// the JWT embeds the name.
+router.patch("/me", requireAuth, async (req, res) => {
+  const db = await readDB();
+  const user = db.users.find(u => u.id === req.user.id);
+  if (!user) return res.status(404).json({ error: "User not found." });
+
+  const { name, currentPassword, newPassword } = req.body || {};
+
+  if (name != null){
+    const trimmed = String(name).trim();
+    if (!trimmed) return res.status(400).json({ error: "Name cannot be empty." });
+    user.name = trimmed;
+  }
+
+  if (newPassword != null){
+    if (String(newPassword).length < 6){
+      return res.status(400).json({ error: "New password must be at least 6 characters." });
+    }
+    if (!currentPassword || !bcrypt.compareSync(String(currentPassword), user.passwordHash)){
+      return res.status(401).json({ error: "Current password is incorrect." });
+    }
+    user.passwordHash = bcrypt.hashSync(String(newPassword), 10);
+  }
+
+  await writeDB(db);
+  const token = signToken(user);
+  res.json({ token, user: publicUser(user) });
 });
 
 module.exports = router;

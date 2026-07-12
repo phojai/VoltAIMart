@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your Wishlist — VoltAIMart</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="topbar">
+  <div class="container">
+    <div class="topbar-brands">
+      <span>Free shipping over ₹4,150</span>
+      <span>2-year warranty on every device</span>
+      <span>30-day easy returns</span>
+      <span>24/7 voice support</span>
+    </div>
+    <div>Need help? <strong style="color:var(--text-primary)">1-800-VOLT-AI</strong></div>
+  </div>
+</div>
+
+<header class="site-header">
+  <div class="container nav-row">
+    <button class="hamburger-btn" id="menuToggle" aria-label="Open menu">
+      <span></span><span></span><span></span>
+    </button>
+    <a href="index.html" class="logo"><span class="mark">⚡</span> VoltAIMart</a>
+    <div class="nav-icons">
+      <a href="wishlist.html" class="icon-btn" title="Wishlist">🤍</a>
+      <a href="cart.html" class="icon-btn" title="Cart">
+        🛒
+        <span class="badge" data-cart-badge>0</span>
+      </a>
+      <a href="login.html" class="icon-btn" title="Account" data-account-link>👤</a>
+      <button class="icon-btn call-sim-btn" id="phoneSimBtn" title="Try a call to VoltAI" type="button">📞</button>
+    </div>
+  </div>
+  <div class="container search-row">
+    <div class="nav-search nav-search-wide">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="topSearchInput" placeholder="Search products, or ask VoltAI…">
+      <button class="mic-btn" title="Search by voice">🎙️</button>
+    </div>
+  </div>
+</header>
+
+<section class="section tight">
+  <div class="container">
+    <div class="breadcrumb"><a href="index.html">Home</a> / Wishlist</div>
+    <div class="section-head">
+      <div>
+        <p class="eyebrow accent">Saved for later</p>
+        <h2>Your wishlist</h2>
+      </div>
+    </div>
+
+    <div class="product-grid" id="wishlistGrid"><!-- filled by JS --></div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-bottom">
+      <span>© 2026 VoltAIMart. All rights reserved.</span>
+      <span>Privacy · Terms</span>
+    </div>
+  </div>
+</footer>
+
+<script src="js/api.js"></script>
+<script src="js/catalog.js"></script>
+<script src="js/app.js"></script>
+<script src="js/aichat.js"></script>
+<!-- @vapi-ai/web no longer ships a plain-global browser bundle — every file under
+     its dist/ (including dist/vapi.min.js) is CommonJS ("exports"/"require"), which
+     throws "exports is not defined" if loaded via a plain <script src>. Load it as
+     an ES module instead via jsDelivr's +esm conversion, then stash the default
+     export on window.Vapi so phoneSimulator.js (a classic script) can still find it. -->
+<script type="module">
+  import Vapi from "https://cdn.jsdelivr.net/npm/@vapi-ai/web/+esm";
+  window.Vapi = Vapi;
+</script>
+<script src="js/vapiCall.js"></script>
+<script src="js/phoneSimulator.js"></script>
+<script>
+if (!requireRole(null)) { /* requireRole already redirected to login */ }
+
+document.addEventListener("catalog:ready", async () => {
+  const root = document.getElementById("wishlistGrid");
+  let ids = [];
+  try { ids = await Api.getWishlist(); }
+  catch(e){ /* leave ids empty on failure */ }
+
+  const products = ids.map(id => getProductById(id)).filter(Boolean);
+
+  if (!products.length){
+    root.innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1;">
+        <span class="icon">🤍</span>
+        <h3 style="margin-bottom:8px;">Your wishlist is empty</h3>
+        <p>Save products you like by tapping the heart icon on any product.</p>
+        <a href="products.html" class="btn btn-primary" style="margin-top:18px; display:inline-flex;">Browse products</a>
+      </div>
+    `;
+    return;
+  }
+
+  renderGrid("#wishlistGrid", products);
+});
+</script>
+</body>
+</html>
