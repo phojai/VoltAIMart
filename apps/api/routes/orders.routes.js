@@ -4,6 +4,32 @@ const { readDB, writeDB } = require("../db");
 const { requireAuth, requireRole } = require("../middleware/auth");
 const { sendOrderEmail } = require("../lib/notify");
 
+/**
+ * Attributes revenue back to the search session that led to this order, when
+ * the client reports one (i.e. checkout followed a live search this visit).
+ * Logs one 'purchase' search-analytics event per line item — this is the ONLY
+ * place 'purchase' events are created, so revenue-from-search always reflects
+ * a real, completed order rather than a client-supplied number.
+ */
+function recordSearchPurchaseEvents(db, order, searchSessionId){
+  if (!searchSessionId) return;
+  const originatingSearch = db.searchEvents
+    .filter(e => e.type === "search" && e.searchSessionId === searchSessionId)
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+  const query = originatingSearch ? originatingSearch.query : null;
+  const now = new Date().toISOString();
+  for (const item of order.items){
+    const product = db.products.find(p => p.id === item.productId);
+    db.searchEvents.push({
+      id: nanoid(10), type: "purchase", query, productId: item.productId,
+      category: product ? product.category : null, brand: product ? product.brand : null,
+      revenue: item.lineTotal, orderId: order.id, searchSessionId,
+      userId: order.userId, userSegment: order.userId ? "customer" : "guest",
+      createdAt: now,
+    });
+  }
+}
+
 const router = express.Router();
 const STATUSES = ["processing", "shipped", "delivered", "cancelled"];
 
@@ -188,6 +214,8 @@ router.post("/", async (req, res) => {
   }
 
   sendOrderEmail(db, order, "order_confirmation");
+  try { recordSearchPurchaseEvents(db, order, req.body?.searchSessionId); }
+  catch (e){ console.error("Search purchase attribution failed (non-fatal):", e.message); }
 
   db.orders.push(order);
   await writeDB(db);

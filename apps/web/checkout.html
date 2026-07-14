@@ -77,6 +77,7 @@
 <script src="js/api.js"></script>
 <script src="js/catalog.js"></script>
 <script src="js/app.js"></script>
+<script src="js/search.js"></script>
 <script src="js/aichat.js"></script>
 <!-- @vapi-ai/web no longer ships a plain-global browser bundle — every file under
      its dist/ (including dist/vapi.min.js) is CommonJS ("exports"/"require"), which
@@ -386,6 +387,8 @@ document.addEventListener("catalog:ready", async () => {
       try {
         const items = cartLines.map(l => ({ productId: l.product.id, qty: l.qty }));
         const extras = user ? { saveAddress } : { email: guestEmail };
+        const searchSessionId = getSearchSessionId();
+        if (searchSessionId) extras.searchSessionId = searchSessionId;
         const order = await Api.createOrder(items, address, payment, extras);
         saveCart({});
         renderConfirmation(order);

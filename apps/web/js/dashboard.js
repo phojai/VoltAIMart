@@ -172,7 +172,7 @@ function populateCategorySelect(){
   sel.innerHTML = META.categories.map(c => `<option value="${c.id}">${c.icon} ${c.label}</option>`).join("");
 }
 
-function openAddProduct(){
+function openAddProduct(prefillName){
   editingProductId = null;
   document.getElementById("productModalTitle").textContent = "Add product";
   document.getElementById("productFormSubmit").textContent = "Save product";
@@ -180,6 +180,7 @@ function openAddProduct(){
   document.getElementById("pfIcon").value = "📦";
   document.getElementById("pfRating").value = "4.5";
   document.getElementById("pfStock").value = "25";
+  if (prefillName) document.getElementById("pfName").value = prefillName;
   document.getElementById("productFormError").textContent = "";
   document.getElementById("productModalOverlay").classList.add("open");
 }
@@ -596,11 +597,262 @@ async function saveVapiSettings(){
   }
 }
 
+/* ---------------- Search Analytics ---------------- */
+let searchAnalyticsCache = null;
+let trendBucket = "daily";
+let mostSearchedSize = "top10";
+
+function fmtCompact(n){
+  n = Number(n) || 0;
+  if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
+  if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "K";
+  return String(n);
+}
+
+function populateSearchCategoryFilter(){
+  const sel = document.getElementById("searchFilterCategory");
+  sel.innerHTML = `<option value="">All categories</option>` + META.categories.map(c => `<option value="${c.id}">${c.icon} ${c.label}</option>`).join("");
+}
+
+function currentSearchFilters(){
+  const days = document.getElementById("searchFilterRange").value;
+  const filters = {
+    category: document.getElementById("searchFilterCategory").value,
+    deviceType: document.getElementById("searchFilterDevice").value,
+    userSegment: document.getElementById("searchFilterSegment").value,
+  };
+  if (days){
+    const from = new Date(Date.now() - Number(days) * 24 * 60 * 60 * 1000);
+    filters.from = from.toISOString().slice(0, 10);
+  }
+  return filters;
+}
+
+function renderSearchStatTiles(a){
+  const stats = [
+    { label: "Total searches", value: fmtCompact(a.funnel.searches), icon: "🔍" },
+    { label: "Total clicks", value: fmtCompact(a.funnel.clicks), icon: "👆" },
+    { label: "Add-to-cart", value: fmtCompact(a.funnel.addToCart), icon: "🛒" },
+    { label: "Purchases", value: fmtCompact(a.funnel.purchases), icon: "✅" },
+    { label: "Search CTR", value: `${a.ctr.overall}%`, icon: "📈" },
+    { label: "Search conversion", value: `${a.conversionRate.overall}%`, icon: "💹" },
+    { label: "Revenue from search", value: fmtMoney(a.revenue.total), icon: "💰" },
+  ];
+  document.getElementById("searchStatGrid").innerHTML = stats.map(s => `
+    <div class="stat-card">
+      <span class="stat-icon">${s.icon}</span>
+      <div><div class="stat-value">${s.value}</div><div class="stat-label">${s.label}</div></div>
+    </div>
+  `).join("");
+}
+
+/** Horizontal bar chart — used for both the ordinal funnel and the single-hue revenue-by-category bar. */
+function renderBarChart(containerId, rows, opts = {}){
+  const el = document.getElementById(containerId);
+  if (!rows.length){ el.innerHTML = `<div class="viz-empty">Not enough data yet — figures will appear here as real searches happen.</div>`; return; }
+  const max = Math.max(...rows.map(r => r.value), 1);
+  el.innerHTML = `<div class="viz-bars">${rows.map(r => `
+    <div class="viz-bar-row">
+      <span class="viz-bar-row-label"></span>
+      <span class="viz-bar-track"><span class="viz-bar-fill" style="width:${Math.max(2, (r.value / max) * 100)}%; background:${r.color};"></span></span>
+      <span class="viz-bar-value"></span>
+    </div>
+  `).join("")}</div>`;
+  const rowEls = el.querySelectorAll(".viz-bar-row");
+  rowEls.forEach((rowEl, i) => {
+    rowEl.querySelector(".viz-bar-row-label").textContent = rows[i].label;
+    rowEl.querySelector(".viz-bar-value").textContent = opts.valueFormatter ? opts.valueFormatter(rows[i].value) : rows[i].value.toLocaleString("en-IN");
+  });
+}
+
+function renderFunnel(funnel){
+  const rows = [
+    { label: "Searches", value: funnel.searches, color: "var(--viz-ordinal-1)" },
+    { label: "Clicks", value: funnel.clicks, color: "var(--viz-ordinal-2)" },
+    { label: "Add to cart", value: funnel.addToCart, color: "var(--viz-ordinal-3)" },
+    { label: "Purchases", value: funnel.purchases, color: "var(--viz-ordinal-4)" },
+  ];
+  renderBarChart("searchFunnel", rows);
+}
+
+function renderRevenueChart(revenue){
+  document.getElementById("searchRevenueStats").innerHTML = `
+    <div class="revenue-stat">Total<strong>${fmtMoney(revenue.total)}</strong></div>
+    <div class="revenue-stat">Categories with sales<strong>${revenue.byCategory.length}</strong></div>
+    <div class="revenue-stat">Products with sales<strong>${revenue.byProduct.length}</strong></div>
+  `;
+  const rows = revenue.byCategory.slice(0, 8).map(c => ({ label: categoryLabel(c.category) || c.category, value: c.revenue, color: "var(--viz-bar-single)" }));
+  renderBarChart("searchRevenueChart", rows, { valueFormatter: fmtMoney });
+}
+
+/** 2-series line chart (CTR + Conversion Rate) with legend, hover crosshair+tooltip, and end-of-line labels. */
+function renderTrendChart(trendRows){
+  const el = document.getElementById("searchTrend");
+  if (!trendRows.length){
+    el.innerHTML = `<div class="viz-empty">Not enough data yet — the trend fills in as searches happen over time.</div>`;
+    document.getElementById("trendTableWrap").innerHTML = "";
+    return;
+  }
+
+  const W = 900, H = 260, padL = 40, padR = 56, padT = 16, padB = 30;
+  const maxPct = Math.max(...trendRows.map(r => Math.max(r.ctr, r.conversionRate)), 5);
+  const x = i => padL + (i / Math.max(1, trendRows.length - 1)) * (W - padL - padR);
+  const y = v => H - padB - (v / maxPct) * (H - padT - padB);
+
+  const ctrPath = trendRows.map((r, i) => `${i === 0 ? "M" : "L"} ${x(i).toFixed(1)} ${y(r.ctr).toFixed(1)}`).join(" ");
+  const convPath = trendRows.map((r, i) => `${i === 0 ? "M" : "L"} ${x(i).toFixed(1)} ${y(r.conversionRate).toFixed(1)}`).join(" ");
+
+  // Y-axis gridlines at clean-ish steps.
+  const steps = 4;
+  const gridLines = Array.from({ length: steps + 1 }, (_, i) => {
+    const v = (maxPct / steps) * i;
+    return `<line x1="${padL}" x2="${W - padR}" y1="${y(v)}" y2="${y(v)}" stroke="var(--viz-grid)" stroke-width="1"></line>
+            <text x="${padL - 8}" y="${y(v) + 4}" text-anchor="end" font-size="10.5" fill="var(--text-tertiary)">${v.toFixed(0)}%</text>`;
+  }).join("");
+
+  const lastIdx = trendRows.length - 1;
+
+  el.innerHTML = `
+    <div class="viz-legend">
+      <span class="viz-legend-item"><span class="viz-legend-key" style="background:var(--viz-series-ctr);"></span> CTR</span>
+      <span class="viz-legend-item"><span class="viz-legend-key" style="background:var(--viz-series-conv);"></span> Conversion rate</span>
+    </div>
+    <div style="position:relative;">
+      <svg viewBox="0 0 ${W} ${H}" style="width:100%; height:auto; display:block;" id="trendSvg">
+        ${gridLines}
+        <line x1="${padL}" x2="${W - padR}" y1="${H - padB}" y2="${H - padB}" stroke="var(--viz-baseline)" stroke-width="1"></line>
+        <path d="${ctrPath}" fill="none" stroke="var(--viz-series-ctr)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>
+        <path d="${convPath}" fill="none" stroke="var(--viz-series-conv)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>
+        <circle cx="${x(lastIdx)}" cy="${y(trendRows[lastIdx].ctr)}" r="4" fill="var(--viz-series-ctr)" stroke="var(--bg-1)" stroke-width="2"></circle>
+        <circle cx="${x(lastIdx)}" cy="${y(trendRows[lastIdx].conversionRate)}" r="4" fill="var(--viz-series-conv)" stroke="var(--bg-1)" stroke-width="2"></circle>
+        <text x="${x(lastIdx) + 8}" y="${y(trendRows[lastIdx].ctr) + 4}" font-size="11" fill="var(--viz-series-ctr)" font-weight="700">${trendRows[lastIdx].ctr}%</text>
+        <text x="${x(lastIdx) + 8}" y="${y(trendRows[lastIdx].conversionRate) + 4}" font-size="11" fill="var(--viz-series-conv)" font-weight="700">${trendRows[lastIdx].conversionRate}%</text>
+        <line id="trendCrosshair" x1="0" x2="0" y1="${padT}" y2="${H - padB}" stroke="var(--viz-baseline)" stroke-width="1" style="display:none;"></line>
+      </svg>
+      <div class="viz-tooltip" id="trendTooltip"></div>
+    </div>
+  `;
+
+  const svg = document.getElementById("trendSvg");
+  const tooltip = document.getElementById("trendTooltip");
+  const crosshair = document.getElementById("trendCrosshair");
+  svg.addEventListener("mousemove", (e) => {
+    const rect = svg.getBoundingClientRect();
+    const px = ((e.clientX - rect.left) / rect.width) * W;
+    let nearest = 0, best = Infinity;
+    trendRows.forEach((r, i) => { const d = Math.abs(x(i) - px); if (d < best){ best = d; nearest = i; } });
+    const r = trendRows[nearest];
+    crosshair.style.display = "";
+    crosshair.setAttribute("x1", x(nearest)); crosshair.setAttribute("x2", x(nearest));
+    tooltip.innerHTML = `<div>${r.period}</div><div>CTR: <span class="viz-tooltip-value">${r.ctr}%</span></div><div>Conversion: <span class="viz-tooltip-value">${r.conversionRate}%</span></div>`;
+    tooltip.classList.add("show");
+    tooltip.style.left = `${(x(nearest) / W) * rect.width + 12}px`;
+    tooltip.style.top = `10px`;
+  });
+  svg.addEventListener("mouseleave", () => { crosshair.style.display = "none"; tooltip.classList.remove("show"); });
+
+  document.getElementById("trendTableWrap").innerHTML = `
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Period</th><th class="num">Searches</th><th class="num">Clicks</th><th class="num">Purchases</th><th class="num">CTR</th><th class="num">Conversion</th></tr></thead>
+        <tbody>${trendRows.map(r => `<tr><td>${r.period}</td><td class="num">${r.searches}</td><td class="num">${r.clicks}</td><td class="num">${r.purchases}</td><td class="num">${r.ctr}%</td><td class="num">${r.conversionRate}%</td></tr>`).join("")}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+function renderZeroResultTable(list){
+  const body = document.getElementById("zeroResultBody");
+  if (!list.length){
+    body.innerHTML = `<tr><td colspan="4" class="muted" style="text-align:center; padding:24px;">No zero-result searches in this range. 🎉</td></tr>`;
+    return;
+  }
+  body.innerHTML = list.slice(0, 25).map((z, i) => `
+    <tr>
+      <td class="mono"></td>
+      <td class="num">${z.count}</td>
+      <td class="num">${fmtMoney(z.estimatedLostRevenue)}</td>
+      <td><button class="link-btn" data-map-synonym="${i}">Map synonym</button> · <button class="link-btn" data-add-product="${i}">Add product</button></td>
+    </tr>
+  `).join("");
+  const rows = body.querySelectorAll("tr");
+  rows.forEach((row, i) => { const cell = row.querySelector("td.mono"); if (cell) cell.textContent = list[i].query; });
+
+  body.querySelectorAll("[data-map-synonym]").forEach(btn => btn.addEventListener("click", async () => {
+    const query = list[Number(btn.dataset.mapSynonym)].query;
+    const canonical = window.prompt(`Map "${query}" to which existing search term? (e.g. a product/category keyword customers already find)`);
+    if (!canonical) return;
+    try {
+      await Api.addSynonym(query, canonical.trim());
+      showToast(`"${query}" now also matches "${canonical.trim()}".`);
+    } catch(err){
+      showToast(err.message || "Couldn't save that mapping.");
+    }
+  }));
+  body.querySelectorAll("[data-add-product]").forEach(btn => btn.addEventListener("click", () => {
+    const query = list[Number(btn.dataset.addProduct)].query;
+    switchTab("products");
+    document.querySelector('.dash-tab[data-tab="products"]').classList.add("active");
+    document.querySelector('.dash-tab[data-tab="search"]').classList.remove("active");
+    openAddProduct(query);
+  }));
+}
+
+function renderMostSearchedTable(mostSearched){
+  const list = mostSearched[mostSearchedSize] || [];
+  const body = document.getElementById("mostSearchedBody");
+  if (!list.length){
+    body.innerHTML = `<tr><td colspan="6" class="muted" style="text-align:center; padding:24px;">No search activity in this range yet.</td></tr>`;
+    return;
+  }
+  body.innerHTML = list.map(p => `
+    <tr>
+      <td></td>
+      <td class="num">${p.searchVolume}</td>
+      <td class="num">${p.clicks}</td>
+      <td class="num">${p.addToCarts}</td>
+      <td class="num">${p.purchases}</td>
+      <td class="num">${fmtMoney(p.revenue)}</td>
+    </tr>
+  `).join("");
+  body.querySelectorAll("tr").forEach((row, i) => { row.querySelector("td").textContent = list[i].name; });
+}
+
+function renderInsights(insights){
+  const el = document.getElementById("pmInsightsList");
+  if (!insights.length){
+    el.innerHTML = `<li style="border-style:dashed;">Not enough search activity yet to generate insights — check back once real customer searches accumulate.</li>`;
+    return;
+  }
+  el.innerHTML = insights.map(() => `<li></li>`).join("");
+  el.querySelectorAll("li").forEach((li, i) => { li.textContent = insights[i]; });
+}
+
+async function loadSearchAnalytics(){
+  const filters = currentSearchFilters();
+  let a;
+  try {
+    a = await Api.getSearchAnalytics(filters);
+  } catch(err){
+    document.getElementById("searchStatGrid").innerHTML = `<p class="muted">Couldn't load search analytics right now.</p>`;
+    return;
+  }
+  searchAnalyticsCache = a;
+  renderSearchStatTiles(a);
+  renderFunnel(a.funnel);
+  renderTrendChart(a.trends[trendBucket]);
+  renderRevenueChart(a.revenue);
+  renderZeroResultTable(a.zeroResultSearches);
+  renderMostSearchedTable(a.mostSearched);
+  renderInsights(a.insights);
+}
+
 /* ---------------- Tabs ---------------- */
 function switchTab(tab){
   document.querySelectorAll(".dash-tab").forEach(t => t.classList.toggle("active", t.dataset.tab === tab));
   document.getElementById("panel-orders").style.display = tab === "orders" ? "" : "none";
   document.getElementById("panel-products").style.display = tab === "products" ? "" : "none";
+  document.getElementById("panel-search").style.display = tab === "search" ? "" : "none";
   document.getElementById("panel-users").style.display = tab === "users" ? "" : "none";
   document.getElementById("panel-settings").style.display = tab === "settings" ? "" : "none";
   document.getElementById("panel-stack").style.display = tab === "stack" ? "" : "none";
@@ -637,11 +889,37 @@ document.addEventListener("DOMContentLoaded", async () => {
     btn.addEventListener("click", async () => {
       switchTab(btn.dataset.tab);
       if (btn.dataset.tab === "users") await loadUsers();
+      if (btn.dataset.tab === "search") await loadSearchAnalytics();
       if (btn.dataset.tab === "settings"){
         await loadSettings();
         await loadVapiSettings();
       }
     });
+  });
+
+  populateSearchCategoryFilter();
+  ["searchFilterRange", "searchFilterCategory", "searchFilterDevice", "searchFilterSegment"].forEach(id => {
+    document.getElementById(id).addEventListener("change", loadSearchAnalytics);
+  });
+  document.getElementById("trendBucketToggle").addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-bucket]");
+    if (!btn || !searchAnalyticsCache) return;
+    trendBucket = btn.dataset.bucket;
+    document.querySelectorAll("#trendBucketToggle button").forEach(b => b.classList.toggle("active", b === btn));
+    renderTrendChart(searchAnalyticsCache.trends[trendBucket]);
+  });
+  document.getElementById("mostSearchedToggle").addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-n]");
+    if (!btn || !searchAnalyticsCache) return;
+    mostSearchedSize = btn.dataset.n;
+    document.querySelectorAll("#mostSearchedToggle button").forEach(b => b.classList.toggle("active", b === btn));
+    renderMostSearchedTable(searchAnalyticsCache.mostSearched);
+  });
+  document.querySelector('[data-toggle-table="trend"]').addEventListener("click", (e) => {
+    const wrap = document.getElementById("trendTableWrap");
+    const showing = wrap.style.display !== "none";
+    wrap.style.display = showing ? "none" : "";
+    e.target.textContent = showing ? "View as table" : "Hide table";
   });
 
   if (currentUser.role === "admin"){

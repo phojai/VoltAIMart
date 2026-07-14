@@ -425,6 +425,7 @@ h1,h2,h3,h4{margin:0; font-weight:800; letter-spacing:-.01em;}
   margin:0 auto 34px;
 }
 .hero-search{
+  position:relative;
   max-width:620px;
   margin:0 auto;
   display:flex;
@@ -1694,6 +1695,158 @@ select.select-sort{
 .arch-caption{font-size:12px; color: var(--text-tertiary); line-height:1.6; margin-top:2px;}
 .arch-caption .dot{color: var(--accent);}
 .arch-caption .dot-v{color: var(--violet);}
+
+/* ---------- Smart autocomplete dropdown ---------- */
+.search-suggest-panel{
+  display:none;
+  position:absolute;
+  top:calc(100% + 8px);
+  left:0; right:0;
+  background: var(--bg-1);
+  border:1px solid var(--card-border);
+  border-radius:16px;
+  box-shadow:0 16px 40px rgba(0,0,0,0.45);
+  padding:8px;
+  max-height:70vh;
+  overflow-y:auto;
+  z-index:60;
+  text-align:left;
+}
+.search-suggest-panel.open{display:block;}
+.suggest-section + .suggest-section{border-top:1px solid var(--divider); margin-top:6px; padding-top:6px;}
+.suggest-section-title{
+  font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em;
+  color: var(--text-tertiary); padding:6px 10px 4px;
+}
+.suggest-row{
+  display:flex; align-items:center; gap:10px;
+  padding:8px 10px;
+  border-radius:10px;
+  cursor:pointer;
+  color: var(--text-primary);
+  text-decoration:none;
+}
+.suggest-row:hover, .suggest-row.active{background: var(--card-bg-hover);}
+.suggest-icon{width:20px; text-align:center; flex-shrink:0; font-size:13px;}
+.suggest-label{font-size:13.5px; color: var(--text-secondary);}
+.suggest-thumb{
+  width:36px; height:36px; border-radius:9px; flex-shrink:0;
+  background: var(--card-bg); border:1px solid var(--card-border);
+  display:flex; align-items:center; justify-content:center; font-size:17px;
+}
+.suggest-product-info{flex:1; min-width:0; display:flex; flex-direction:column; gap:1px;}
+.suggest-product-name{font-size:13.5px; font-weight:600; color: var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.suggest-product-meta{font-size:11.5px; color: var(--text-tertiary);}
+.suggest-product-price{font-size:13px; font-weight:700; color: var(--accent-light); flex-shrink:0;}
+
+/* ---------- Search result meta (typo correction / semantic chips) ---------- */
+#searchMeta:empty{display:none;}
+.search-meta-row{
+  font-size:13px; color: var(--text-secondary);
+  margin-bottom:10px;
+}
+.search-meta-row.muted{color: var(--text-tertiary); font-size:12.5px;}
+.filter-chip{
+  display:inline-block;
+  background: var(--card-bg);
+  border:1px solid var(--card-border);
+  border-radius:999px;
+  padding:3px 11px;
+  font-size:12px;
+  color: var(--text-secondary);
+  margin:2px 3px 2px 0;
+}
+
+/* ============================================================
+   Search Analytics dashboard — chart chrome.
+   Validated against the app's fixed dark surface (~#0c0b13) with
+   dataviz-skill's validate_palette.js (all PASS):
+     - ordinal funnel ramp (one hue, monotone light->dark)
+     - categorical pair for the 2-line trend chart
+   These are separate "chart ink" tokens, tuned slightly darker than
+   --accent/--violet for chart-mark legibility — the brand tokens stay
+   as-is everywhere else (buttons, badges, etc.).
+   ============================================================ */
+:root{
+  --viz-grid: var(--divider);
+  --viz-baseline: rgba(255,255,255,0.16);
+  --viz-ordinal-1:#f3b16a; --viz-ordinal-2:#e8983d; --viz-ordinal-3:#c97b28; --viz-ordinal-4:#a35f1a;
+  --viz-series-ctr:#c97b28;
+  --viz-series-conv: var(--violet);
+  --viz-bar-single:#c97b28;
+  --viz-good: var(--success);
+  --viz-warn: var(--accent-light);
+  --viz-critical: var(--danger);
+}
+
+.viz-filters-row{
+  display:flex; flex-wrap:wrap; gap:10px;
+  margin-bottom:20px;
+}
+.viz-card{
+  background: var(--card-bg);
+  border:1px solid var(--card-border);
+  border-radius:16px;
+  padding:22px 24px;
+  margin-bottom:20px;
+}
+.viz-card-head{
+  display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;
+  margin-bottom:16px;
+}
+.viz-card-head h3{font-size:16px; margin:0;}
+.viz-card-head p{font-size:12.5px; color: var(--text-tertiary); margin:2px 0 0;}
+
+.chart-bucket-toggle{display:flex; gap:4px; background: rgba(255,255,255,0.04); border-radius:10px; padding:3px;}
+.chart-bucket-toggle button{
+  border:none; background:transparent; color: var(--text-tertiary);
+  font-size:12.5px; font-weight:600; padding:6px 12px; border-radius:8px; cursor:pointer;
+}
+.chart-bucket-toggle button.active{background: var(--card-bg-hover); color: var(--text-primary);}
+
+.viz-table-toggle{margin-top:10px;}
+.viz-table-wrap{margin-top:12px;}
+
+/* ---- Funnel & single-series bar chart ---- */
+.viz-bars{display:flex; flex-direction:column; gap:2px;}
+.viz-bar-row{display:grid; grid-template-columns:150px 1fr 90px; align-items:center; gap:12px; min-height:34px;}
+.viz-bar-row-label{font-size:13px; color: var(--text-secondary); text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.viz-bar-track{position:relative; height:24px; background:transparent;}
+.viz-bar-fill{
+  position:absolute; left:0; top:0; height:24px;
+  border-radius:0 4px 4px 0;
+  transition:.25s;
+}
+.viz-bar-value{font-size:13px; font-weight:700; color: var(--text-primary); font-variant-numeric:tabular-nums;}
+.viz-empty{font-size:13px; color: var(--text-tertiary); padding:20px 0; text-align:center;}
+
+/* ---- Line/trend chart ---- */
+.viz-legend{display:flex; gap:18px; margin-bottom:10px; font-size:12.5px; color: var(--text-secondary);}
+.viz-legend-item{display:flex; align-items:center; gap:7px;}
+.viz-legend-key{width:14px; height:2px; border-radius:2px; display:inline-block;}
+.viz-tooltip{
+  position:absolute; pointer-events:none;
+  background: var(--bg-1); border:1px solid var(--card-border); border-radius:10px;
+  padding:8px 12px; font-size:12px; color: var(--text-secondary);
+  box-shadow:0 8px 24px rgba(0,0,0,0.4);
+  opacity:0; transition:opacity .1s; z-index:5; white-space:nowrap;
+}
+.viz-tooltip.show{opacity:1;}
+.viz-tooltip .viz-tooltip-value{color: var(--text-primary); font-weight:700;}
+
+.revenue-stat-row{display:flex; gap:28px; margin-bottom:18px; flex-wrap:wrap;}
+.revenue-stat{font-size:13px; color: var(--text-tertiary);}
+.revenue-stat strong{display:block; font-size:22px; color: var(--text-primary); font-weight:700; margin-top:2px;}
+
+.insights-list{list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:12px;}
+.insights-list li{
+  font-size:13.5px; line-height:1.55; color: var(--text-secondary);
+  padding:12px 16px; background: rgba(255,255,255,0.02); border:1px solid var(--card-border); border-radius:12px;
+  display:flex; gap:10px;
+}
+.insights-list li::before{content:"💡"; flex-shrink:0;}
+
+.data-table td.num, .data-table th.num{text-align:right; font-variant-numeric:tabular-nums;}
 
 .provider-grid{
   display:grid;

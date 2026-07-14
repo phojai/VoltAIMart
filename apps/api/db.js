@@ -89,6 +89,8 @@ function seedInitialData(){
     reviews: [],
     wishlists: {},
     notifications: [],
+    searchEvents: [],
+    searchConfig: { customSynonyms: {} },
     departments: DEPARTMENTS,
     categories: CATEGORIES,
     settings: defaultSettings(),
@@ -133,6 +135,20 @@ async function readDB(){
   if (!data.notifications){ data.notifications = []; dirty = true; }
   if (data.users.some(u => !Array.isArray(u.addresses))){
     data.users.forEach(u => { if (!Array.isArray(u.addresses)) u.addresses = []; });
+    dirty = true;
+  }
+  // Migration: search analytics events, custom synonym overrides, and
+  // per-user recent-search history didn't exist before this update.
+  if (!data.searchEvents){ data.searchEvents = []; dirty = true; }
+  if (!data.searchConfig){ data.searchConfig = { customSynonyms: {} }; dirty = true; }
+  if (data.users.some(u => !Array.isArray(u.recentSearches))){
+    data.users.forEach(u => { if (!Array.isArray(u.recentSearches)) u.recentSearches = []; });
+    dirty = true;
+  }
+  // Migration: every product is VoltAIMart's own private label — backfill an
+  // explicit brand field so brand suggestions/filters have real data to use.
+  if (data.products.some(p => !p.brand)){
+    data.products.forEach(p => { if (!p.brand) p.brand = "Volt"; });
     dirty = true;
   }
   if (dirty) await writeDB(data);

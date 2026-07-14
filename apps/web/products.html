@@ -55,6 +55,8 @@
       </div>
     </div>
 
+    <div id="searchMeta"></div>
+
     <div class="listing-layout">
       <aside class="filter-panel">
         <h4>Department</h4>
@@ -142,6 +144,7 @@
 <script src="js/api.js"></script>
 <script src="js/catalog.js"></script>
 <script src="js/app.js"></script>
+<script src="js/search.js"></script>
 <script src="js/aichat.js"></script>
 <!-- @vapi-ai/web no longer ships a plain-global browser bundle — every file under
      its dist/ (including dist/vapi.min.js) is CommonJS ("exports"/"require"), which
@@ -163,11 +166,15 @@ document.addEventListener("catalog:ready", () => {
   let state = {
     department: params.get("department") || (initialCategoryObj ? initialCategoryObj.department : ""),
     category: initialCategory,
+    brand: params.get("brand") || "",
     q: params.get("q") || "",
     price: "all",
     rating: "0",
     sort: "relevance",
+    raw: false, // true = bypass typo-correction/semantic parsing (the "search instead for the literal text" escape hatch)
   };
+  let searchMeta = null; // last /api/search response metadata (correction, semantic filters, etc.)
+  let requestSeq = 0;    // guards against a slow, now-stale request overwriting a newer one
 
   function renderDeptFilters(){
     document.getElementById("deptFilters").innerHTML = `
@@ -203,11 +210,77 @@ document.addEventListener("catalog:ready", () => {
     return Array.from(document.querySelectorAll(".cat-check:checked")).map(el => el.value);
   }
 
-  function applyFilters(){
-    let list = PRODUCTS.slice();
+  function renderSearchMeta(){
+    const el = document.getElementById("searchMeta");
+    if (!searchMeta || !state.q){ el.innerHTML = ""; return; }
 
-    if (state.q){
+    const parts = [];
+    if (searchMeta.correctedQuery){
+      parts.push(`
+        <div class="search-meta-row">
+          Showing results for <strong>"${searchMeta.correctedQuery}"</strong>
+          — <button class="link-btn" id="searchInsteadBtn">Search instead for "${searchMeta.didYouMean}"</button>
+        </div>
+      `);
+    }
+    if (searchMeta.semantic && searchMeta.appliedFilters){
+      const f = searchMeta.appliedFilters;
+      const chips = [
+        f.category ? categoryLabel(f.category) : null,
+        f.useCase ? `for ${f.useCase}` : null,
+        f.priceMax ? `under ₹${Number(f.priceMax).toLocaleString('en-IN')}` : null,
+        f.priceMin ? `over ₹${Number(f.priceMin).toLocaleString('en-IN')}` : null,
+        ...(f.features || []),
+      ].filter(Boolean);
+      if (chips.length){
+        parts.push(`<div class="search-meta-row muted">🤖 AI understood: ${chips.map(c => `<span class="filter-chip">${c}</span>`).join(" ")}</div>`);
+      }
+    }
+    if (searchMeta.clarify && searchMeta.clarify.length){
+      parts.push(`<div class="search-meta-row muted">Tell us more: ${searchMeta.clarify.map(q => `<span class="filter-chip">${q}</span>`).join(" ")}</div>`);
+    }
+    el.innerHTML = parts.join("");
+
+    const insteadBtn = document.getElementById("searchInsteadBtn");
+    if (insteadBtn){
+      insteadBtn.addEventListener("click", () => {
+        state.q = searchMeta.didYouMean;
+        state.raw = true;
+        document.getElementById("topSearchInput").value = state.q;
+        applyFilters();
+      });
+    }
+  }
+
+  async function applyFilters(){
+    let list;
+
+    if (state.q && !state.raw){
+      const mySeq = ++requestSeq;
+      try {
+        const data = await Api.search({
+          q: state.q, brand: state.brand, sessionId: getSearchSessionId(),
+          deviceType: window.innerWidth < 768 ? "mobile" : "desktop",
+        });
+        if (mySeq !== requestSeq) return; // a newer search superseded this one
+        list = data.products;
+        searchMeta = data;
+      } catch(e){
+        list = searchProducts(state.q); // network hiccup — fall back to client-side search
+        searchMeta = null;
+      }
+    } else if (state.q && state.raw){
       list = searchProducts(state.q);
+      searchMeta = null;
+      state.raw = false; // one-shot — subsequent edits go back through smart search
+    } else {
+      list = PRODUCTS.slice();
+      searchMeta = null;
+    }
+    renderSearchMeta();
+
+    if (state.brand && !state.q){
+      list = list.filter(p => (p.brand || "").toLowerCase() === state.brand.toLowerCase());
     }
 
     if (state.department){
@@ -265,7 +338,8 @@ document.addEventListener("catalog:ready", () => {
   document.querySelectorAll('input[name="rating"]').forEach(el => el.addEventListener("change", (e) => { state.rating = e.target.value; applyFilters(); }));
   document.getElementById("sortSelect").addEventListener("change", (e) => { state.sort = e.target.value; applyFilters(); });
   document.getElementById("clearFilters").addEventListener("click", () => {
-    state = { department: "", category: "", q: "", price: "all", rating: "0", sort: "relevance" };
+    state = { department: "", category: "", brand: "", q: "", price: "all", rating: "0", sort: "relevance", raw: false };
+    searchMeta = null;
     renderDeptFilters();
     renderCategoryFilters();
     document.querySelector('input[name="price"][value="all"]').checked = true;
@@ -273,6 +347,18 @@ document.addEventListener("catalog:ready", () => {
     document.getElementById("sortSelect").value = "relevance";
     document.getElementById("topSearchInput").value = "";
     applyFilters();
+  });
+
+  // Delegated click tracking: attribute a product click back to the search
+  // that surfaced it (only meaningful when a live search is in effect).
+  document.getElementById("productGrid").addEventListener("click", (e) => {
+    const link = e.target.closest('a[href*="product.html?id="]');
+    if (!link || !state.q) return;
+    const productId = new URLSearchParams(link.href.split("?")[1]).get("id");
+    const sessionId = getSearchSessionId();
+    if (productId && sessionId){
+      Api.trackSearchEvent({ type: "product_click", productId, query: state.q, searchSessionId: sessionId });
+    }
   });
 
   applyFilters();

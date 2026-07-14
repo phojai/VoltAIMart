@@ -185,6 +185,35 @@ const Api = {
     const data = await apiFetch("/api/settings", { method: "PUT", body: patch });
     return data.settings;
   },
+
+  async suggest(q){
+    return apiFetch(`/api/search/suggest?q=${encodeURIComponent(q)}`);
+  },
+  async search(params = {}){
+    const qs = new URLSearchParams(Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== ""));
+    return apiFetch(`/api/search?${qs.toString()}`);
+  },
+  /** Fire-and-forget analytics event — never throws, never blocks the caller. */
+  trackSearchEvent(payload){
+    apiFetch("/api/search/track", { method: "POST", body: payload }).catch(() => {});
+  },
+  async getSearchAnalytics(filters = {}){
+    const qs = new URLSearchParams(Object.entries(filters).filter(([, v]) => v));
+    const data = await apiFetch(`/api/search/analytics?${qs.toString()}`);
+    return data.analytics;
+  },
+  async getSynonyms(){
+    const data = await apiFetch("/api/search/synonyms");
+    return data.synonyms;
+  },
+  async addSynonym(term, canonical){
+    const data = await apiFetch("/api/search/synonyms", { method: "POST", body: { term, canonical } });
+    return data.synonyms;
+  },
+  async deleteSynonym(term){
+    const data = await apiFetch(`/api/search/synonyms/${encodeURIComponent(term)}`, { method: "DELETE" });
+    return data.synonyms;
+  },
 };
 
 /** Redirects to login.html if not logged in, or if role isn't allowed. Returns the user, or null after redirecting. */

@@ -30,6 +30,7 @@
     <div class="dash-tabs" id="dashTabs">
       <button class="dash-tab active" data-tab="orders">Orders</button>
       <button class="dash-tab" data-tab="products">Product Catalog</button>
+      <button class="dash-tab" data-tab="search">Search Analytics</button>
       <button class="dash-tab" data-tab="users" id="usersTabBtn" style="display:none;">Users</button>
       <button class="dash-tab" data-tab="settings" id="settingsTabBtn" style="display:none;">AI Settings</button>
       <button class="dash-tab" data-tab="stack" id="stackTabBtn" style="display:none;">Tech Stack</button>
@@ -78,6 +79,92 @@
           </thead>
           <tbody id="productsBody"></tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- Search Analytics -->
+    <div class="dash-panel" id="panel-search" style="display:none;">
+      <div class="viz-filters-row">
+        <select class="select-sort" id="searchFilterRange">
+          <option value="">All time</option>
+          <option value="7">Last 7 days</option>
+          <option value="30" selected>Last 30 days</option>
+          <option value="90">Last 90 days</option>
+        </select>
+        <select class="select-sort" id="searchFilterCategory"><option value="">All categories</option></select>
+        <select class="select-sort" id="searchFilterDevice">
+          <option value="">All devices</option>
+          <option value="desktop">Desktop</option>
+          <option value="mobile">Mobile</option>
+        </select>
+        <select class="select-sort" id="searchFilterSegment">
+          <option value="">All users</option>
+          <option value="guest">Guests</option>
+          <option value="customer">Customers</option>
+          <option value="staff">Staff</option>
+        </select>
+      </div>
+
+      <div class="stat-grid" id="searchStatGrid"></div>
+
+      <div class="viz-card">
+        <div class="viz-card-head"><h3>Search funnel</h3><p class="muted">Searches → clicks → add-to-cart → purchases</p></div>
+        <div id="searchFunnel"></div>
+      </div>
+
+      <div class="viz-card">
+        <div class="viz-card-head">
+          <h3>CTR &amp; conversion trend</h3>
+          <div class="chart-bucket-toggle" id="trendBucketToggle">
+            <button data-bucket="daily" class="active">Daily</button>
+            <button data-bucket="weekly">Weekly</button>
+            <button data-bucket="monthly">Monthly</button>
+          </div>
+        </div>
+        <div id="searchTrend"></div>
+        <div class="viz-table-toggle"><button class="link-btn" data-toggle-table="trend">View as table</button></div>
+        <div class="viz-table-wrap" id="trendTableWrap" style="display:none;"></div>
+      </div>
+
+      <div class="viz-card">
+        <div class="viz-card-head"><h3>Revenue from search</h3></div>
+        <div id="searchRevenueStats" class="revenue-stat-row"></div>
+        <div id="searchRevenueChart"></div>
+      </div>
+
+      <div class="viz-card">
+        <div class="viz-card-head">
+          <h3>Zero-result searches</h3>
+          <p class="muted">Queries that returned nothing — a synonym mapping or new SKU could recover this demand</p>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table" id="zeroResultTable">
+            <thead><tr><th>Query</th><th>Occurrences</th><th>Est. lost revenue</th><th></th></tr></thead>
+            <tbody id="zeroResultBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="viz-card">
+        <div class="viz-card-head">
+          <h3>Most searched products</h3>
+          <div class="chart-bucket-toggle" id="mostSearchedToggle">
+            <button data-n="top10" class="active">Top 10</button>
+            <button data-n="top50">Top 50</button>
+            <button data-n="top100">Top 100</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table" id="mostSearchedTable">
+            <thead><tr><th>Product</th><th>Search volume</th><th>Clicks</th><th>Add-to-carts</th><th>Purchases</th><th>Revenue</th></tr></thead>
+            <tbody id="mostSearchedBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="viz-card">
+        <div class="viz-card-head"><h3>Product Manager insights</h3></div>
+        <ul class="insights-list" id="pmInsightsList"></ul>
       </div>
     </div>
 

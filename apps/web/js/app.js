@@ -19,6 +19,12 @@ function addToCart(productId, qty = 1){
   saveCart(cart);
   const p = getProductById(productId);
   showToast(`Added "${p ? p.name : "item"}" to cart`);
+  // Best-effort search-analytics attribution (js/search.js) — a no-op off any
+  // page that isn't part of a live search session.
+  if (typeof getSearchSessionId === "function" && typeof Api !== "undefined"){
+    const sessionId = getSearchSessionId();
+    if (sessionId) Api.trackSearchEvent({ type: "add_to_cart", productId, searchSessionId: sessionId });
+  }
 }
 function setCartQty(productId, qty){
   const cart = getCart();
@@ -142,6 +148,9 @@ function highlightActiveNav(){
 }
 
 function goToSearch(query){
+  // Stamps a fresh search-attribution session (js/search.js) before leaving —
+  // later clicks/add-to-cart/purchase on products.html attribute back to it.
+  if (typeof startNewSearchSession === "function") startNewSearchSession();
   window.location.href = `products.html?q=${encodeURIComponent(query)}`;
 }
 
