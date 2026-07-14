@@ -311,7 +311,7 @@
         <div class="stack-section">
           <p class="stack-section-title">Architecture</p>
           <div class="arch-diagram-wrap">
-            <svg viewBox="0 0 1300 590" role="img" aria-label="VoltAIMart architecture: browser client calls the Express API, which reads and writes a pluggable JSON store, and optionally calls external AI and voice services.">
+            <svg viewBox="0 0 1300 690" role="img" aria-label="VoltAIMart architecture: browser client calls the Express API — including search — which reads and writes a pluggable JSON store, and optionally calls external AI and voice services.">
               <defs>
                 <marker id="archArrowAccent" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
                   <path d="M0,0 L8,4 L0,8 z" fill="var(--accent)"></path>
@@ -325,7 +325,7 @@
               <rect x="240" y="20" width="500" height="100" rx="16" fill="var(--card-bg)" stroke="var(--accent)" stroke-width="1.5"></rect>
               <text x="490" y="46" text-anchor="middle" font-size="14" font-weight="700" fill="var(--text-primary)">Browser client</text>
               <text x="490" y="65" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">apps/web — static HTML / CSS / JS, no build step</text>
-              <text x="490" y="86" text-anchor="middle" font-size="10.5" fill="var(--text-tertiary)">Storefront · Cart · Checkout · Track order</text>
+              <text x="490" y="86" text-anchor="middle" font-size="10.5" fill="var(--text-tertiary)">Storefront · Search &amp; autocomplete · Cart · Checkout</text>
               <text x="490" y="102" text-anchor="middle" font-size="10.5" fill="var(--text-tertiary)">Account · Wishlist · Admin dashboard (role-gated)</text>
 
               <!-- Client -> API -->
@@ -333,91 +333,100 @@
               <text x="502" y="152" font-size="10.5" fill="var(--text-tertiary)">fetch() + Bearer JWT → /api/*</text>
 
               <!-- API tier -->
-              <rect x="40" y="180" width="900" height="230" rx="18" fill="rgba(232,152,61,0.05)" stroke="var(--accent)" stroke-width="1.25" opacity="0.9"></rect>
+              <rect x="40" y="180" width="900" height="325" rx="18" fill="rgba(232,152,61,0.05)" stroke="var(--accent)" stroke-width="1.25" opacity="0.9"></rect>
               <text x="490" y="204" text-anchor="middle" font-size="13" font-weight="700" fill="var(--text-primary)">Express API — apps/api/server.js</text>
 
               <!-- Row 1 chips -->
               <g>
-                <rect x="60" y="215" width="200" height="80" rx="12" fill="var(--card-bg)" stroke="var(--card-border)"></rect>
-                <text x="160" y="245" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--text-primary)">Auth</text>
-                <text x="160" y="264" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">JWT + bcrypt, role checks</text>
+                <rect x="60" y="215" width="270" height="80" rx="12" fill="var(--card-bg)" stroke="var(--card-border)"></rect>
+                <text x="195" y="245" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--text-primary)">Auth</text>
+                <text x="195" y="264" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">JWT + bcrypt, role checks</text>
               </g>
               <g>
-                <rect x="280" y="215" width="200" height="80" rx="12" fill="var(--card-bg)" stroke="var(--card-border)"></rect>
-                <text x="380" y="245" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--text-primary)">Products &amp; Reviews</text>
-                <text x="380" y="264" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">Catalog, stock, ratings</text>
+                <rect x="355" y="215" width="270" height="80" rx="12" fill="var(--card-bg)" stroke="var(--card-border)"></rect>
+                <text x="490" y="245" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--text-primary)">Products &amp; Reviews</text>
+                <text x="490" y="264" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">Catalog, stock, ratings</text>
               </g>
               <g>
-                <rect x="500" y="215" width="200" height="80" rx="12" fill="var(--card-bg)" stroke="var(--card-border)"></rect>
-                <text x="600" y="245" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--text-primary)">Orders</text>
-                <text x="600" y="264" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">Checkout, cancel, tracking</text>
-              </g>
-              <g>
-                <rect x="720" y="215" width="200" height="80" rx="12" fill="var(--card-bg)" stroke="var(--card-border)"></rect>
-                <text x="820" y="245" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--text-primary)">Notifications</text>
-                <text x="820" y="264" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">Simulated order emails</text>
+                <rect x="650" y="215" width="270" height="80" rx="12" fill="var(--card-bg)" stroke="var(--card-border)"></rect>
+                <text x="785" y="245" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--text-primary)">Orders</text>
+                <text x="785" y="264" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">Checkout, cancel, tracking</text>
               </g>
 
               <!-- Row 2 chips -->
               <g>
-                <rect x="60" y="310" width="200" height="80" rx="12" fill="var(--card-bg)" stroke="var(--card-border)"></rect>
-                <text x="160" y="340" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--text-primary)">Addresses &amp; Wishlist</text>
-                <text x="160" y="359" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">Address book, saved items</text>
+                <rect x="60" y="310" width="270" height="80" rx="12" fill="var(--card-bg)" stroke="var(--card-border)"></rect>
+                <text x="195" y="340" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--text-primary)">Notifications</text>
+                <text x="195" y="359" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">Simulated order emails</text>
               </g>
               <g>
-                <rect x="280" y="310" width="200" height="80" rx="12" fill="var(--card-bg)" stroke="var(--card-border)"></rect>
-                <text x="380" y="340" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--text-primary)">Users</text>
-                <text x="380" y="359" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">Admin: roles, delete</text>
+                <rect x="355" y="310" width="270" height="80" rx="12" fill="var(--card-bg)" stroke="var(--card-border)"></rect>
+                <text x="490" y="340" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--text-primary)">Addresses &amp; Wishlist</text>
+                <text x="490" y="359" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">Address book, saved items</text>
               </g>
               <g>
-                <rect x="500" y="310" width="200" height="80" rx="12" fill="var(--card-bg)" stroke="var(--card-border)"></rect>
-                <text x="600" y="340" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--text-primary)">Chat (LLM tools)</text>
-                <text x="600" y="359" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">Anthropic/OpenAI/Gemini + Tavily</text>
+                <rect x="650" y="310" width="270" height="80" rx="12" fill="var(--card-bg)" stroke="var(--card-border)"></rect>
+                <text x="785" y="340" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--text-primary)">Users</text>
+                <text x="785" y="359" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">Admin: roles, delete</text>
+              </g>
+
+              <!-- Row 3 chips — search + the two AI-adjacent surfaces -->
+              <g>
+                <rect x="60" y="405" width="270" height="80" rx="12" fill="var(--card-bg)" stroke="var(--card-border)"></rect>
+                <text x="195" y="435" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--text-primary)">Search</text>
+                <text x="195" y="454" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">Autocomplete, typo/synonyms, semantic, analytics</text>
               </g>
               <g>
-                <rect x="720" y="310" width="200" height="80" rx="12" fill="var(--card-bg)" stroke="var(--card-border)"></rect>
-                <text x="820" y="340" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--text-primary)">Voice Agent</text>
-                <text x="820" y="359" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">Vapi, or simulated speech</text>
+                <rect x="355" y="405" width="270" height="80" rx="12" fill="var(--card-bg)" stroke="var(--card-border)"></rect>
+                <text x="490" y="435" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--text-primary)">Chat (LLM tools)</text>
+                <text x="490" y="454" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">Anthropic/OpenAI/Gemini + Tavily</text>
+              </g>
+              <g>
+                <rect x="650" y="405" width="270" height="80" rx="12" fill="var(--card-bg)" stroke="var(--card-border)"></rect>
+                <text x="785" y="435" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--text-primary)">Voice Agent</text>
+                <text x="785" y="454" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">Vapi, or simulated speech</text>
               </g>
 
               <!-- API -> Storage -->
-              <line x1="360" y1="410" x2="360" y2="467" stroke="var(--success)" stroke-width="1.5" marker-end="url(#archArrowAccent)"></line>
-              <line x1="620" y1="410" x2="620" y2="467" stroke="var(--violet)" stroke-width="1.5" marker-end="url(#archArrowViolet)"></line>
-              <text x="490" y="452" text-anchor="middle" font-size="10.5" fill="var(--text-tertiary)">store.js — pluggable get()/set(), auto-selected by env</text>
+              <line x1="360" y1="505" x2="360" y2="562" stroke="var(--success)" stroke-width="1.5" marker-end="url(#archArrowAccent)"></line>
+              <line x1="620" y1="505" x2="620" y2="562" stroke="var(--violet)" stroke-width="1.5" marker-end="url(#archArrowViolet)"></line>
+              <text x="490" y="547" text-anchor="middle" font-size="10.5" fill="var(--text-tertiary)">store.js — pluggable get()/set(), auto-selected by env</text>
 
               <!-- Storage tier -->
-              <rect x="245" y="470" width="230" height="90" rx="14" fill="var(--card-bg)" stroke="var(--success)" stroke-width="1.25"></rect>
-              <text x="360" y="500" text-anchor="middle" font-size="13" font-weight="700" fill="var(--text-primary)">db.json (local file)</text>
-              <text x="360" y="519" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">Dev default — zero setup</text>
-              <text x="360" y="536" text-anchor="middle" font-size="10.5" fill="var(--text-tertiary)">apps/api/data/db.json</text>
+              <rect x="245" y="565" width="230" height="90" rx="14" fill="var(--card-bg)" stroke="var(--success)" stroke-width="1.25"></rect>
+              <text x="360" y="595" text-anchor="middle" font-size="13" font-weight="700" fill="var(--text-primary)">db.json (local file)</text>
+              <text x="360" y="614" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">Dev default — zero setup</text>
+              <text x="360" y="631" text-anchor="middle" font-size="10.5" fill="var(--text-tertiary)">apps/api/data/db.json — incl. searchEvents</text>
 
-              <rect x="505" y="470" width="230" height="90" rx="14" fill="var(--card-bg)" stroke="var(--violet)" stroke-width="1.25"></rect>
-              <text x="620" y="500" text-anchor="middle" font-size="13" font-weight="700" fill="var(--text-primary)">Upstash Redis</text>
-              <text x="620" y="519" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">Vercel's read-only filesystem</text>
-              <text x="620" y="536" text-anchor="middle" font-size="10.5" fill="var(--text-tertiary)">KV_REST_API_URL / _TOKEN</text>
+              <rect x="505" y="565" width="230" height="90" rx="14" fill="var(--card-bg)" stroke="var(--violet)" stroke-width="1.25"></rect>
+              <text x="620" y="595" text-anchor="middle" font-size="13" font-weight="700" fill="var(--text-primary)">Upstash Redis</text>
+              <text x="620" y="614" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">Vercel's read-only filesystem</text>
+              <text x="620" y="631" text-anchor="middle" font-size="10.5" fill="var(--text-tertiary)">KV_REST_API_URL / _TOKEN</text>
 
               <!-- External services tier -->
-              <rect x="980" y="180" width="280" height="230" rx="18" fill="var(--violet-dim)" stroke="var(--violet)" stroke-width="1.25" stroke-dasharray="5 5"></rect>
+              <rect x="980" y="180" width="280" height="325" rx="18" fill="var(--violet-dim)" stroke="var(--violet)" stroke-width="1.25" stroke-dasharray="5 5"></rect>
               <text x="1120" y="204" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--text-primary)">External services</text>
               <text x="1120" y="220" text-anchor="middle" font-size="10" fill="var(--text-tertiary)">optional — set in AI / Voice settings</text>
 
-              <rect x="1010" y="245" width="220" height="36" rx="8" fill="var(--card-bg)" stroke="var(--card-border)"></rect>
-              <text x="1120" y="268" text-anchor="middle" font-size="11" fill="var(--text-secondary)">Anthropic · OpenAI · Gemini</text>
+              <rect x="1010" y="255" width="220" height="36" rx="8" fill="var(--card-bg)" stroke="var(--card-border)"></rect>
+              <text x="1120" y="278" text-anchor="middle" font-size="11" fill="var(--text-secondary)">Anthropic · OpenAI · Gemini</text>
 
-              <rect x="1010" y="291" width="220" height="36" rx="8" fill="var(--card-bg)" stroke="var(--card-border)"></rect>
-              <text x="1120" y="314" text-anchor="middle" font-size="11" fill="var(--text-secondary)">Tavily web search</text>
+              <rect x="1010" y="345" width="220" height="36" rx="8" fill="var(--card-bg)" stroke="var(--card-border)"></rect>
+              <text x="1120" y="368" text-anchor="middle" font-size="11" fill="var(--text-secondary)">Tavily web search</text>
 
-              <rect x="1010" y="337" width="220" height="36" rx="8" fill="var(--card-bg)" stroke="var(--card-border)"></rect>
-              <text x="1120" y="360" text-anchor="middle" font-size="11" fill="var(--text-secondary)">Vapi voice AI</text>
+              <rect x="1010" y="435" width="220" height="36" rx="8" fill="var(--card-bg)" stroke="var(--card-border)"></rect>
+              <text x="1120" y="458" text-anchor="middle" font-size="11" fill="var(--text-secondary)">Vapi voice AI</text>
 
-              <!-- Dashed optional connectors -->
-              <line x1="700" y1="345" x2="980" y2="263" stroke="var(--violet)" stroke-width="1" stroke-dasharray="4 4" marker-end="url(#archArrowViolet)"></line>
-              <line x1="920" y1="360" x2="980" y2="358" stroke="var(--violet)" stroke-width="1" stroke-dasharray="4 4" marker-end="url(#archArrowViolet)"></line>
+              <!-- Dashed optional connectors — Search's semantic parsing and Chat both
+                   lean on the LLM providers; Chat also reaches Tavily; Voice Agent -> Vapi. -->
+              <line x1="330" y1="445" x2="980" y2="273" stroke="var(--violet)" stroke-width="1" stroke-dasharray="4 4" marker-end="url(#archArrowViolet)"></line>
+              <line x1="625" y1="445" x2="980" y2="318" stroke="var(--violet)" stroke-width="1" stroke-dasharray="4 4" marker-end="url(#archArrowViolet)"></line>
+              <line x1="920" y1="445" x2="980" y2="453" stroke="var(--violet)" stroke-width="1" stroke-dasharray="4 4" marker-end="url(#archArrowViolet)"></line>
             </svg>
           </div>
           <p class="arch-caption">
             <span class="dot">●</span> Solid arrows follow a real request end-to-end (browser → API → store).
-            <span class="dot-v">●</span> Dashed arrows are optional, pluggable integrations — only called when a key/assistant is configured in Settings.
+            <span class="dot-v">●</span> Dashed arrows are optional, pluggable integrations — only called when a key/assistant is configured in Settings. Search's AI semantic parsing reuses the same LLM call path as Chat, and degrades to keyword/typo/synonym matching alone when no key is configured.
             Locally, one Express process serves both the API and the static frontend; on Vercel, <span class="mono">apps/web</span> deploys to the static CDN and <span class="mono">apps/api</span> runs as a serverless function (<span class="mono">api/index.js</span>), with Upstash Redis standing in for the local <span class="mono">db.json</span> file.
           </p>
         </div>
@@ -512,6 +521,54 @@
               <div>
                 <div class="stack-card-name">Simulated notifications</div>
                 <div class="stack-card-desc">Order confirmed/shipped/delivered/cancelled "emails" recorded and shown in an account-page inbox — <span class="mono">lib/notify.js</span> is the single integration point for a real provider (SES/SendGrid/Resend) later.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stack-section">
+          <p class="stack-section-title">Search &amp; discovery</p>
+          <div class="stack-grid">
+            <div class="stack-card">
+              <div class="stack-card-icon">⌨️</div>
+              <div>
+                <div class="stack-card-name">Smart autocomplete</div>
+                <div class="stack-card-desc">Debounced (250ms) product/category/brand/popular/trending/recent suggestions from an in-memory index — <span class="mono">js/search.js</span>, <span class="mono">GET /api/search/suggest</span>. No DB writes, comfortably under 200ms.</div>
+              </div>
+            </div>
+            <div class="stack-card">
+              <div class="stack-card-icon">🔤</div>
+              <div>
+                <div class="stack-card-name">Typo tolerance &amp; synonyms</div>
+                <div class="stack-card-desc">Hand-rolled Levenshtein correction against the live catalog vocabulary, plus a bidirectional synonym map (admin-extendable) — <span class="mono">lib/textMatch.js</span>.</div>
+              </div>
+            </div>
+            <div class="stack-card">
+              <div class="stack-card-icon">🧠</div>
+              <div>
+                <div class="stack-card-name">AI semantic search</div>
+                <div class="stack-card-desc">Natural-language queries ("laptop for coding") are parsed into structured filters by the same admin-configured LLM Chat uses — <span class="mono">lib/searchParse.js</span>. Falls back to keyword search with no key set.</div>
+              </div>
+            </div>
+            <div class="stack-card">
+              <div class="stack-card-icon">📊</div>
+              <div>
+                <div class="stack-card-name">Ranking &amp; relevance</div>
+                <div class="stack-card-desc">Blends text relevance with real CTR / add-to-cart / purchase rate / availability — <span class="mono">lib/searchScore.js</span>. Weights match the 40/25/20/10/5 formula.</div>
+              </div>
+            </div>
+            <div class="stack-card">
+              <div class="stack-card-icon">📈</div>
+              <div>
+                <div class="stack-card-name">Search Analytics dashboard</div>
+                <div class="stack-card-desc">Funnel, CTR/conversion trend, revenue-from-search, zero-result recovery (map synonym / add product), most-searched products, and templated PM insights — <span class="mono">lib/searchAnalytics.js</span>, Admin → Search Analytics.</div>
+              </div>
+            </div>
+            <div class="stack-card">
+              <div class="stack-card-icon">🗄️</div>
+              <div>
+                <div class="stack-card-name">Search event log</div>
+                <div class="stack-card-desc">Every search/click/add-to-cart is logged client-side; purchases are attributed server-side from completed orders only — <span class="mono">db.searchEvents</span>, never trusts client-reported revenue.</div>
               </div>
             </div>
           </div>
